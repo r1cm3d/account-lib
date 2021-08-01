@@ -7,6 +7,7 @@
 ```console
 make
 ```
+[comment]: <> (TODO: add description and gif here)
 
 ## Prerequisites
 [![Docker](https://img.shields.io/badge/Docker-19.03.9-blue)](https://www.docker.com/)
@@ -30,13 +31,13 @@ useful insights about of writing Go code in general.
 
 ### Testing
 #### Unit tests
-[comment]: <> (TODO: add description here)
+[comment]: <> (TODO: add description and gif here)
 ```sh
 make unit-test
 ```
 
 #### Integration tests
-[comment]: <> (TODO: add description here)
+[comment]: <> (TODO: add description and gif here)
 ```sh
 make integration-test
 ```

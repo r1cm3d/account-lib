@@ -33,7 +33,7 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=password
     volumes:
-      - ./scripts/db:/docker-entrypoint-initdb.d/
+      - ./scripts/db:/docker-entrypoint-initdb.d
 
   vault:
     image: vault:1.6.3

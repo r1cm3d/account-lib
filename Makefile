@@ -10,7 +10,11 @@ fmt:
 	@echo "\nFormatting go files\n"
 	@go fmt ./...
 
-assemble: fmt lint
+vet:
+	@echo "\nApplying go vet\n"
+	@go vet ./...
+
+assemble: fmt lint vet
 	@echo "\nBuilding application\n"
 	@go build
 
@@ -30,5 +34,9 @@ install:
 	@docker-compose up -d --force-recreate
 
 uninstall:
-	@echo "\nStopping fake account API"
+	@echo "\nStopping fake account API\n"
 	@docker-compose stop
+
+clean: uninstall
+	@echo "\nCleaning all images"
+	@cd scripts  && sh clean.sh

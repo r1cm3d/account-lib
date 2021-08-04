@@ -15,7 +15,7 @@ func TestCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccount()
-	repo := newHTTPRepository(_itAddress, _itPort)
+	repo := NewHTTPRepository(WithAddr(_itAddress), WithPort(_itPort))
 
 	got, err := repo.create(account)
 	if err != nil {
@@ -49,7 +49,7 @@ func TestCreate_Error(t *testing.T) {
 // TODO: improve it
 func TestHealth(t *testing.T) {
 	skipShort(t)
-	repo := newHTTPRepository(_itAddress, _itPort)
+	repo := NewHTTPRepository(WithAddr(_itAddress), WithPort(_itPort))
 
 	if err := repo.health(); err != nil {
 		t.Fail()

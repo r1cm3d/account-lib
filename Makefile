@@ -2,6 +2,10 @@
 
 all: assemble
 
+doc:
+	@echo "\nGenerating documentation at localhost:6060. Press Ctrl|Command + C to exit\n"
+	@godoc -http=:6060
+
 lint:
 	@echo "\nApplying golint\n"
 	@golint ./...

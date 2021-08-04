@@ -10,19 +10,30 @@ import (
 )
 
 const (
+	_defaultHTTPAddress = "0.0.0.0"
+	_defaultHTTPPort    = "8080"
 	_defaultContentType = "application/json"
 	_errContext         = "http_repo"
 )
 
 type (
+	httpOption interface {
+		apply(*httpOptions)
+	}
+	httpOptions struct {
+		addr string
+		port string
+	}
+	addrOption string
+	portOption string
+
 	payload struct {
 		Data *account `json:"data"`
 	}
 
-	marshal func(v interface{}) ([]byte, error)
-	post    func(url, contentType string, body io.Reader) (resp *http.Response, err error)
-	decode  func(d *json.Decoder, v interface{}) error
-
+	marshal        func(v interface{}) ([]byte, error)
+	post           func(url, contentType string, body io.Reader) (resp *http.Response, err error)
+	decode         func(d *json.Decoder, v interface{}) error
 	httpRepository struct {
 		addr string
 		port string
@@ -32,14 +43,35 @@ type (
 	}
 )
 
-// TODO:
-// - make it exported;
-// - Add documentation;
-// - Change parameters to Functional Options: https://github.com/uber-go/guide/blob/master/style.md#functional-options;
-func newHTTPRepository(addr, port string) httpRepository {
+// WithAddr attaches server address to HTTP client.
+// Default is 0.0.0.0
+func WithAddr(addr string) httpOption {
+	return addrOption(addr)
+}
+
+// WithPort attaches server TCP port to HTTP client.
+// Default is 8080
+func WithPort(port string) httpOption {
+	return portOption(port)
+}
+
+// NewHTTPRepository instantiate a httpRepository based on httpOption(s) passed as arguments.
+//
+// Example:
+//  repository := NewHTTPRepository(acc.WithPort("8080"))
+func NewHTTPRepository(opts ...httpOption) httpRepository {
+	options := httpOptions{
+		addr: _defaultHTTPAddress,
+		port: _defaultHTTPPort,
+	}
+
+	for _, o := range opts {
+		o.apply(&options)
+	}
+
 	return httpRepository{
-		addr:    addr,
-		port:    port,
+		addr:    options.addr,
+		port:    options.port,
 		marshal: json.Marshal,
 		post:    http.Post,
 		decode:  func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
@@ -97,4 +129,11 @@ func (r httpRepository) health() error {
 	// TODO: unmarshal status and try status code
 	fmt.Println(data)
 	return nil
+}
+
+func (a addrOption) apply(opts *httpOptions) {
+	opts.addr = string(a)
+}
+func (p portOption) apply(opts *httpOptions) {
+	opts.port = string(p)
 }

@@ -31,10 +31,10 @@ func TestRepositoryCreate_Error(t *testing.T) {
 		in   httpRepository
 		want error
 	}{
-		{"marshal error", repositoryWithMarshalError, errors.New("http_repo create marshal: error on marshal")},
-		{"post error", repositoryWithPostError, errors.New("http_repo create request: error on post")},
-		{"unsuccessfully status code", repositoryWithUnsuccessfullyStatusCode, errors.New("http_repo create status code verification: not success != 201")},
-		{"decode error", repositoryWithDecodeError, errors.New("http_repo create decode: error on decode")},
+		{"marshal error", repositoryWithMarshalError, errors.New("http_repository create marshal: error on marshal")},
+		{"post error", repositoryWithPostError, errors.New("http_repository create request: error on post")},
+		{"unsuccessfully status code", repositoryWithUnsuccessfullyStatusCode, errors.New("http_repository create status code verification: not success != 201")},
+		{"decode error", repositoryWithDecodeError, errors.New("http_repository create decode: error on decode")},
 	}
 	acc := stubAccount()
 
@@ -134,15 +134,18 @@ var (
 var (
 	mockedBytes                = []byte("mock")
 	repositoryWithMarshalError = httpRepository{
+		errCtx:  "http_repository",
 		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
 	}
 	repositoryWithPostError = httpRepository{
+		errCtx:  "http_repository",
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 			return nil, errors.New("error on post")
 		},
 	}
 	repositoryWithUnsuccessfullyStatusCode = httpRepository{
+		errCtx:  "http_repository",
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 			return &http.Response{
@@ -152,6 +155,7 @@ var (
 		},
 	}
 	repositoryWithDecodeError = httpRepository{
+		errCtx:  "http_repository",
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 			return &http.Response{

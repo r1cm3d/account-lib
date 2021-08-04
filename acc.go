@@ -9,6 +9,7 @@ type (
 	}
 	Service struct {
 		toAcc
+		ofAcc
 		creator
 
 		errCtx string
@@ -17,29 +18,40 @@ type (
 		creator
 	}
 	creator interface {
-		create(acc data) (*data, error)
+		create(data) (*data, error)
 	}
 	toAcc func(CreateRequest) (*data, error)
+	ofAcc func(data) (*Account, error)
 )
 
 // TODO: Create an integration test for all of it
 func NewService(repo repository) *Service {
 	return &Service{
 		toAcc:   nil,
+		ofAcc:   nil,
 		errCtx:  "service",
 		creator: repo,
 	}
 }
 
 func (s Service) Create(cr CreateRequest) (*Account, error) {
+	wrapErr := func(err error, msg string) error {
+		return errors.Wrapf(err, "%s create_%s: %v", s.errCtx, msg, cr)
+	}
 	data, err := s.toAcc(cr)
 	if err != nil {
-		return nil, errors.Wrapf(err, "%s create_toAcc %v", s.errCtx, cr)
+		return nil, wrapErr(err, "toAcc")
 	}
 
-	if _, err := s.create(*data); err != nil {
-		return nil, errors.Wrapf(err, "%s create_repo_create %v", s.errCtx, cr)
+	ret, err := s.create(*data)
+	if err != nil {
+		return nil, wrapErr(err, "repo_create")
 	}
 
-	return &Account{}, nil
+	acc, err := s.ofAcc(*ret)
+	if err != nil {
+		return nil, wrapErr(err, "ofAcc")
+	}
+
+	return acc, nil
 }

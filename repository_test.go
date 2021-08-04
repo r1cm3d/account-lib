@@ -15,7 +15,7 @@ func TestCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccount()
-	repo := newHTTPRepository(_itAddress, _itPort)
+	repo := newHttpRepository(_itAddress, _itPort)
 
 	got, err := repo.create(account)
 	if err != nil {
@@ -28,7 +28,7 @@ func TestCreateIntegration(t *testing.T) {
 func TestCreate_Error(t *testing.T) {
 	cases := []struct {
 		name string
-		in   repo
+		in   httpRepository
 		want error
 	}{
 		{"marshal error", repositoryWithMarshalError, errors.New("http_repo create marshal: error on marshal")},
@@ -49,7 +49,7 @@ func TestCreate_Error(t *testing.T) {
 // TODO: improve it
 func TestHealth(t *testing.T) {
 	skipShort(t)
-	repo := newHTTPRepository(_itAddress, _itPort)
+	repo := newHttpRepository(_itAddress, _itPort)
 
 	if err := repo.health(); err != nil {
 		t.Fail()
@@ -133,14 +133,14 @@ var (
 
 var (
 	mockedBytes = []byte("mock")
-	repositoryWithMarshalError = repo{
+	repositoryWithMarshalError = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
 	}
-	repositoryWithPostError = repo{
+	repositoryWithPostError = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post:    func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
 	}
-	repositoryWithUnsuccessfullyStatusCode = repo{
+	repositoryWithUnsuccessfullyStatusCode = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 			return &http.Response{
@@ -149,7 +149,7 @@ var (
 			}, nil
 		},
 	}
-	repositoryWithDecodeError = repo{
+	repositoryWithDecodeError = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 			return &http.Response{

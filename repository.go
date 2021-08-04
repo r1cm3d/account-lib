@@ -23,7 +23,7 @@ type (
 	post    func(url, contentType string, body io.Reader) (resp *http.Response, err error)
 	decode  func(d *json.Decoder, v interface{}) error
 
-	repo struct {
+	httpRepository struct {
 		addr string
 		port string
 		marshal
@@ -36,8 +36,8 @@ type (
 // - make it exported;
 // - Add documentation;
 // - Change parameters to Functional Options: https://github.com/uber-go/guide/blob/master/style.md#functional-options
-func newHTTPRepository(addr, port string) repo {
-	return repo{
+func newHttpRepository(addr, port string) httpRepository {
+	return httpRepository{
 		addr:    addr,
 		port:    port,
 		marshal: json.Marshal,
@@ -46,7 +46,7 @@ func newHTTPRepository(addr, port string) repo {
 	}
 }
 
-func (r repo) create(acc account) (*account, error) {
+func (r httpRepository) create(acc account) (*account, error) {
 	const (
 		success = 201
 		urlBase = "http://%s:%s/v1/organisation/accounts"
@@ -81,7 +81,7 @@ func (r repo) create(acc account) (*account, error) {
 }
 
 // TODO: improve it
-func (r repo) health() error {
+func (r httpRepository) health() error {
 	// TODO: use mock for it
 	resp, err := http.Get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.addr))
 

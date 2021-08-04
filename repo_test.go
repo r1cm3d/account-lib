@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"testing"
@@ -13,6 +14,14 @@ var (
 	_fakeStubID = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
 	_itAddress  = "0.0.0.0"
 	_itPort     = "8080"
+)
+
+var (
+	repoWithMarshalerError = repo{
+		addr:      "",
+		port:      "",
+		marshaler: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal")},
+	}
 )
 
 func TestCreateIntegration(t *testing.T) {
@@ -27,6 +36,24 @@ func TestCreateIntegration(t *testing.T) {
 	}
 
 	fmt.Printf("Created account: %v", got.ID)
+}
+
+func TestCreate_Error(t *testing.T) {
+	cases := []struct {
+		name string
+		in repo
+		want error
+	}{
+		{"marshaler error", repoWithMarshalerError, errors.New("http_repo create marshal: error on marshal")},
+	}
+	acc := stubAccount()
+
+	for _, tt := range cases {
+		_, got := tt.in.create(acc)
+		if got.Error() != tt.want.Error() {
+			t.Errorf("Create_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+		}
+	}
 }
 
 // TODO: improve it

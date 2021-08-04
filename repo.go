@@ -19,16 +19,20 @@ type (
 		Data *account `json:"data"`
 	}
 
+	marshaler func(v interface{}) ([]byte, error)
+
 	repo struct {
 		addr string
 		port string
+		marshaler
 	}
 )
 
 func newRepo(addr, port string) repo {
 	return repo{
-		addr: addr,
-		port: port,
+		addr:      addr,
+		port:      port,
+		marshaler: json.Marshal,
 	}
 }
 
@@ -38,8 +42,7 @@ func (r repo) create(acc account) (*account, error) {
 		return errors.Wrapf(err, "%s create %s", _errContext, msg)
 	}
 
-	// TODO: use mock for it
-	data, err := json.Marshal(payload{Data: &acc})
+	data, err := r.marshaler(payload{Data: &acc})
 	if err != nil {
 		return nil, wrapErr(err, "marshal")
 	}

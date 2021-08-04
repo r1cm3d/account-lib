@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -22,12 +21,14 @@ type (
 
 	marshal func(v interface{}) ([]byte, error)
 	post    func(url, contentType string, body io.Reader) (resp *http.Response, err error)
+	decode  func(d *json.Decoder, v interface{}) error
 
 	repo struct {
 		addr string
 		port string
 		marshal
 		post
+		decode
 	}
 )
 
@@ -37,6 +38,7 @@ func newRepo(addr, port string) repo {
 		port:    port,
 		marshal: json.Marshal,
 		post:    http.Post,
+		decode:  func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
 	}
 }
 
@@ -57,15 +59,13 @@ func (r repo) create(acc account) (*account, error) {
 		return nil, wrapErr(err, "request")
 	}
 
-	// TODO: use mock for it HARD
 	if resp.StatusCode != success {
-		return nil, wrapErr(err, "not success != 201")
+		return nil, wrapErr(errors.New("not success != 201"), "status code verification")
 	}
 
 	var ret payload
-	// TODO: use mock for it
 	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&ret); err != nil {
+	if err := r.decode(dec, &ret); err != nil {
 		return nil, wrapErr(err, "decode")
 	}
 

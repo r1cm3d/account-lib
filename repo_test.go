@@ -19,11 +19,28 @@ var (
 
 var (
 	repoWithMarshalError = repo{
-		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal")},
+		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
 	}
 	repoWithPostError = repo{
-		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil},
-		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
+		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil },
+		post:    func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
+	}
+	repoWithUnsuccessfullyStatusCode = repo{
+		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 404,
+			}, nil
+		},
+	}
+	repoWithDecodeError = repo{
+		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 201,
+			}, nil
+		},
+		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode") },
 	}
 )
 
@@ -44,11 +61,13 @@ func TestCreateIntegration(t *testing.T) {
 func TestCreate_Error(t *testing.T) {
 	cases := []struct {
 		name string
-		in repo
+		in   repo
 		want error
 	}{
 		{"marshal error", repoWithMarshalError, errors.New("http_repo create marshal: error on marshal")},
 		{"post error", repoWithPostError, errors.New("http_repo create request: error on post")},
+		{"unsuccessfully status code", repoWithUnsuccessfullyStatusCode, errors.New("http_repo create status code verification: not success != 201")},
+		{"decode error", repoWithDecodeError, errors.New("http_repo create decode: error on decode")},
 	}
 	acc := stubAccount()
 

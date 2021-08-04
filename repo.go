@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -19,20 +20,23 @@ type (
 		Data *account `json:"data"`
 	}
 
-	marshaler func(v interface{}) ([]byte, error)
+	marshal func(v interface{}) ([]byte, error)
+	post    func(url, contentType string, body io.Reader) (resp *http.Response, err error)
 
 	repo struct {
 		addr string
 		port string
-		marshaler
+		marshal
+		post
 	}
 )
 
 func newRepo(addr, port string) repo {
 	return repo{
-		addr:      addr,
-		port:      port,
-		marshaler: json.Marshal,
+		addr:    addr,
+		port:    port,
+		marshal: json.Marshal,
+		post:    http.Post,
 	}
 }
 
@@ -42,14 +46,13 @@ func (r repo) create(acc account) (*account, error) {
 		return errors.Wrapf(err, "%s create %s", _errContext, msg)
 	}
 
-	data, err := r.marshaler(payload{Data: &acc})
+	data, err := r.marshal(payload{Data: &acc})
 	if err != nil {
 		return nil, wrapErr(err, "marshal")
 	}
 
 	url := fmt.Sprintf("http://%s:%s/v1/organisation/accounts", r.addr, r.port)
-	// TODO: use mock for it HARD
-	resp, err := http.Post(url, _defaultContentType, bytes.NewBuffer(data))
+	resp, err := r.post(url, _defaultContentType, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, wrapErr(err, "request")
 	}

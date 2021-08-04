@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -17,10 +18,12 @@ var (
 )
 
 var (
-	repoWithMarshalerError = repo{
-		addr:      "",
-		port:      "",
-		marshaler: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal")},
+	repoWithMarshalError = repo{
+		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal")},
+	}
+	repoWithPostError = repo{
+		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil},
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
 	}
 )
 
@@ -44,7 +47,8 @@ func TestCreate_Error(t *testing.T) {
 		in repo
 		want error
 	}{
-		{"marshaler error", repoWithMarshalerError, errors.New("http_repo create marshal: error on marshal")},
+		{"marshal error", repoWithMarshalError, errors.New("http_repo create marshal: error on marshal")},
+		{"post error", repoWithPostError, errors.New("http_repo create request: error on post")},
 	}
 	acc := stubAccount()
 

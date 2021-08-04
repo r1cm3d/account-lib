@@ -15,7 +15,7 @@ func TestCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccount()
-	repo := newHttpRepository(_itAddress, _itPort)
+	repo := newHTTPRepository(_itAddress, _itPort)
 
 	got, err := repo.create(account)
 	if err != nil {
@@ -49,7 +49,7 @@ func TestCreate_Error(t *testing.T) {
 // TODO: improve it
 func TestHealth(t *testing.T) {
 	skipShort(t)
-	repo := newHttpRepository(_itAddress, _itPort)
+	repo := newHTTPRepository(_itAddress, _itPort)
 
 	if err := repo.health(); err != nil {
 		t.Fail()
@@ -132,13 +132,15 @@ var (
 )
 
 var (
-	mockedBytes = []byte("mock")
+	mockedBytes                = []byte("mock")
 	repositoryWithMarshalError = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
 	}
 	repositoryWithPostError = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
-		post:    func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return nil, errors.New("error on post")
+		},
 	}
 	repositoryWithUnsuccessfullyStatusCode = httpRepository{
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },

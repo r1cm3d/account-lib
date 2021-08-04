@@ -12,8 +12,6 @@ import (
 const (
 	_defaultHTTPAddress = "0.0.0.0"
 	_defaultHTTPPort    = "8080"
-	_defaultContentType = "application/json"
-	_errContext         = "http_repo"
 )
 
 type (
@@ -26,20 +24,51 @@ type (
 	}
 	addrOption string
 	portOption string
+)
 
-	payload struct {
-		Data *account `json:"data"`
-	}
-
+type (
 	marshal        func(v interface{}) ([]byte, error)
 	post           func(url, contentType string, body io.Reader) (resp *http.Response, err error)
 	decode         func(d *json.Decoder, v interface{}) error
 	httpRepository struct {
-		addr string
-		port string
 		marshal
 		post
 		decode
+
+		addr     string
+		port     string
+		errCtx   string
+		contType string
+	}
+)
+
+type (
+	payload struct {
+		Data *data `json:"data"`
+	}
+	data struct {
+		Attributes     *attributes `json:"attributes,omitempty"`
+		ID             string      `json:"id,omitempty"`
+		OrganisationID string      `json:"organisation_id,omitempty"`
+		Type           string      `json:"type,omitempty"`
+		Version        *int64      `json:"version,omitempty"`
+	}
+	attributes struct {
+		Classification          *string  `json:"account_classification,omitempty"`
+		MatchingOptOut          *bool    `json:"account_matching_opt_out,omitempty"`
+		Number                  string   `json:"account_number,omitempty"`
+		AlternativeNames        []string `json:"alternative_names,omitempty"`
+		BankID                  string   `json:"bank_id,omitempty"`
+		BankIDCode              string   `json:"bank_id_code,omitempty"`
+		BaseCurrency            string   `json:"base_currency,omitempty"`
+		Bic                     string   `json:"bic,omitempty"`
+		Country                 *string  `json:"country,omitempty"`
+		Iban                    string   `json:"iban,omitempty"`
+		JointAccount            *bool    `json:"joint_account,omitempty"`
+		Name                    []string `json:"name,omitempty"`
+		SecondaryIdentification string   `json:"secondary_identification,omitempty"`
+		Status                  *string  `json:"status,omitempty"`
+		Switched                *bool    `json:"switched,omitempty"`
 	}
 )
 
@@ -70,21 +99,23 @@ func NewHTTPRepository(opts ...httpOption) httpRepository {
 	}
 
 	return httpRepository{
-		addr:    options.addr,
-		port:    options.port,
-		marshal: json.Marshal,
-		post:    http.Post,
-		decode:  func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
+		addr:     options.addr,
+		port:     options.port,
+		errCtx:   "http_repository",
+		contType: "application/json",
+		marshal:  json.Marshal,
+		post:     http.Post,
+		decode:   func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
 	}
 }
 
-func (r httpRepository) create(acc account) (*account, error) {
+func (r httpRepository) create(acc data) (*data, error) {
 	const (
 		success = 201
 		urlBase = "http://%s:%s/v1/organisation/accounts"
 	)
 	wrapErr := func(err error, msg string) error {
-		return errors.Wrapf(err, "%s create %s", _errContext, msg)
+		return errors.Wrapf(err, "%s create %s", r.errCtx, msg)
 	}
 
 	data, err := r.marshal(payload{Data: &acc})
@@ -93,7 +124,7 @@ func (r httpRepository) create(acc account) (*account, error) {
 	}
 
 	url := fmt.Sprintf(urlBase, r.addr, r.port)
-	resp, err := r.post(url, _defaultContentType, bytes.NewBuffer(data))
+	resp, err := r.post(url, r.contType, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, wrapErr(err, "request")
 	}

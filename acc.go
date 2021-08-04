@@ -1,29 +1,45 @@
 package acc
 
+import "github.com/pkg/errors"
+
 type (
-	account struct {
-		Attributes     *attributes `json:"attributes,omitempty"`
-		ID             string      `json:"id,omitempty"`
-		OrganisationID string      `json:"organisation_id,omitempty"`
-		Type           string      `json:"type,omitempty"`
-		Version        *int64      `json:"version,omitempty"`
+	CreateRequest struct {
+	}
+	Account struct {
+	}
+	Service struct {
+		toAcc
+		creator
+
+		errCtx string
+	}
+	repository interface {
+		creator
+	}
+	creator interface {
+		create(acc data) (*data, error)
+	}
+	toAcc func(CreateRequest) (*data, error)
+)
+
+// TODO: Create an integration test for all of it
+func NewService(repo repository) *Service {
+	return &Service{
+		toAcc:   nil,
+		errCtx:  "service",
+		creator: repo,
+	}
+}
+
+func (s Service) Create(cr CreateRequest) (*Account, error) {
+	data, err := s.toAcc(cr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "%s create_toAcc %v", s.errCtx, cr)
 	}
 
-	attributes struct {
-		Classification          *string  `json:"account_classification,omitempty"`
-		MatchingOptOut          *bool    `json:"account_matching_opt_out,omitempty"`
-		Number                  string   `json:"account_number,omitempty"`
-		AlternativeNames        []string `json:"alternative_names,omitempty"`
-		BankID                  string   `json:"bank_id,omitempty"`
-		BankIDCode              string   `json:"bank_id_code,omitempty"`
-		BaseCurrency            string   `json:"base_currency,omitempty"`
-		Bic                     string   `json:"bic,omitempty"`
-		Country                 *string  `json:"country,omitempty"`
-		Iban                    string   `json:"iban,omitempty"`
-		JointAccount            *bool    `json:"joint_account,omitempty"`
-		Name                    []string `json:"name,omitempty"`
-		SecondaryIdentification string   `json:"secondary_identification,omitempty"`
-		Status                  *string  `json:"status,omitempty"`
-		Switched                *bool    `json:"switched,omitempty"`
+	if _, err := s.create(*data); err != nil {
+		return nil, errors.Wrapf(err, "%s create_repo_create %v", s.errCtx, cr)
 	}
-)
+
+	return &Account{}, nil
+}

@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestCreateIntegration(t *testing.T) {
+func TestRepositoryCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccount()
@@ -22,10 +22,10 @@ func TestCreateIntegration(t *testing.T) {
 		t.Fail()
 	}
 
-	fmt.Printf("Created account: %v", got.ID)
+	fmt.Printf("Created data: %v", got.ID)
 }
 
-func TestCreate_Error(t *testing.T) {
+func TestRepositoryCreate_Error(t *testing.T) {
 	cases := []struct {
 		name string
 		in   httpRepository
@@ -41,7 +41,7 @@ func TestCreate_Error(t *testing.T) {
 	for _, tt := range cases {
 		_, got := tt.in.create(acc)
 		if got.Error() != tt.want.Error() {
-			t.Errorf("Create_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+			t.Errorf("RepositoryCreate_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
 		}
 	}
 }
@@ -62,10 +62,10 @@ func skipShort(t *testing.T) {
 	}
 }
 
-func stubAccount() account {
+func stubAccount() data {
 	country := "GB"
 
-	return account{
+	return data{
 		Attributes: &attributes{
 			BankID:       "400300",
 			BankIDCode:   "GBDSC",

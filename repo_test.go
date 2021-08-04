@@ -11,29 +11,30 @@ import (
 
 var (
 	_fakeStubID = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
-	_itAddress = "0.0.0.0"
-	_itPort = "8080"
+	_itAddress  = "0.0.0.0"
+	_itPort     = "8080"
 )
 
 func TestCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
-	// TODO: test passing all arguments
-
-	// WITH CoP
-	// WITHOUT CoP
 	account := stubAccount()
+	repo := newRepo(_itAddress, _itPort)
 
-	if err := create(account); err != nil {
+	got, err := repo.create(account)
+	if err != nil {
 		t.Fail()
 	}
+
+	fmt.Printf("Created account: %v", got.ID)
 }
 
 // TODO: improve it
 func TestHealth(t *testing.T) {
 	skipShort(t)
+	repo := newRepo(_itAddress, _itPort)
 
-	if err := health(); err != nil {
+	if err := repo.health(); err != nil {
 		t.Fail()
 	}
 }
@@ -64,7 +65,7 @@ func stubAccount() account {
 
 func deleteStub(t *testing.T) {
 	const (
-		success = 204
+		success  = 204
 		notFound = 404
 	)
 	client := &http.Client{}
@@ -83,10 +84,6 @@ func deleteStub(t *testing.T) {
 	if (resp.StatusCode != success) && (resp.StatusCode != notFound) {
 		t.Fatalf("Error on delete %s", _fakeStubID)
 	}
-
-	fmt.Println(resp)
-	fmt.Println(resp.Status)
-	fmt.Println(resp.StatusCode)
 }
 
 func addStub(t *testing.T) {

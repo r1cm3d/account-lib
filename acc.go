@@ -1,17 +1,6 @@
 package acc
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
-
 type (
-	payload struct {
-		Data *account `json:"data"`
-	}
-
 	account struct {
 		Attributes     *attributes `json:"attributes,omitempty"`
 		ID             string      `json:"id,omitempty"`
@@ -38,41 +27,3 @@ type (
 		Switched                *bool    `json:"switched,omitempty"`
 	}
 )
-
-func create(acc account) error {
-	data, err := json.Marshal(payload{Data: &acc})
-
-	if err != nil {
-		return err
-	}
-
-	// TODO: change to use configuration
-	resp, err := http.Post("http://0.0.0.0:8080/v1/organisation/accounts", "application/json", bytes.NewBuffer(data))
-
-	if err != nil {
-		return err
-	}
-
-	var ret account
-
-	// TODO: Implement the unmarshalling logic here
-	json.NewDecoder(resp.Body).Decode(&ret)
-
-	fmt.Println(ret)
-	return nil
-}
-
-// TODO: improve it
-func health() error {
-	resp, err := http.Get("http://0.0.0.0:8080/v1/health")
-
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	var data map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&data)
-
-	fmt.Println(data)
-	return nil
-}

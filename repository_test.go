@@ -11,44 +11,11 @@ import (
 	"testing"
 )
 
-var (
-	_fakeStubID = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
-	_itAddress  = "0.0.0.0"
-	_itPort     = "8080"
-)
-
-var (
-	repoWithMarshalError = repo{
-		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
-	}
-	repoWithPostError = repo{
-		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil },
-		post:    func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
-	}
-	repoWithUnsuccessfullyStatusCode = repo{
-		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil },
-		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
-			return &http.Response{
-				StatusCode: 404,
-			}, nil
-		},
-	}
-	repoWithDecodeError = repo{
-		marshal: func(v interface{}) ([]byte, error) { return []byte("mock"), nil },
-		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
-			return &http.Response{
-				StatusCode: 201,
-			}, nil
-		},
-		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode") },
-	}
-)
-
 func TestCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccount()
-	repo := newRepo(_itAddress, _itPort)
+	repo := newHTTPRepository(_itAddress, _itPort)
 
 	got, err := repo.create(account)
 	if err != nil {
@@ -64,10 +31,10 @@ func TestCreate_Error(t *testing.T) {
 		in   repo
 		want error
 	}{
-		{"marshal error", repoWithMarshalError, errors.New("http_repo create marshal: error on marshal")},
-		{"post error", repoWithPostError, errors.New("http_repo create request: error on post")},
-		{"unsuccessfully status code", repoWithUnsuccessfullyStatusCode, errors.New("http_repo create status code verification: not success != 201")},
-		{"decode error", repoWithDecodeError, errors.New("http_repo create decode: error on decode")},
+		{"marshal error", repositoryWithMarshalError, errors.New("http_repo create marshal: error on marshal")},
+		{"post error", repositoryWithPostError, errors.New("http_repo create request: error on post")},
+		{"unsuccessfully status code", repositoryWithUnsuccessfullyStatusCode, errors.New("http_repo create status code verification: not success != 201")},
+		{"decode error", repositoryWithDecodeError, errors.New("http_repo create decode: error on decode")},
 	}
 	acc := stubAccount()
 
@@ -82,7 +49,7 @@ func TestCreate_Error(t *testing.T) {
 // TODO: improve it
 func TestHealth(t *testing.T) {
 	skipShort(t)
-	repo := newRepo(_itAddress, _itPort)
+	repo := newHTTPRepository(_itAddress, _itPort)
 
 	if err := repo.health(); err != nil {
 		t.Fail()
@@ -157,3 +124,45 @@ func addStub(t *testing.T) {
 		t.Fatal("Error on addStub")
 	}
 }
+
+var (
+	_fakeStubID = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
+	_itAddress  = "0.0.0.0"
+	_itPort     = "8080"
+)
+
+var (
+	mockedBytes = []byte("mock")
+	repositoryWithMarshalError = repo{
+		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
+	}
+	repositoryWithPostError = repo{
+		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
+		post:    func(url, contentType string, body io.Reader) (resp *http.Response, err error) { return nil, errors.New("error on post") },
+	}
+	repositoryWithUnsuccessfullyStatusCode = repo{
+		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 404,
+				Body:       mockCloser{bytes.NewBuffer(mockedBytes)},
+			}, nil
+		},
+	}
+	repositoryWithDecodeError = repo{
+		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 201,
+				Body:       mockCloser{bytes.NewBuffer(mockedBytes)},
+			}, nil
+		},
+		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode") },
+	}
+)
+
+type mockCloser struct {
+	io.Reader
+}
+
+func (mockCloser) Close() error { return nil }

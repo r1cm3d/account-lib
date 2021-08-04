@@ -32,7 +32,11 @@ type (
 	}
 )
 
-func newRepo(addr, port string) repo {
+// TODO:
+// - make it exported;
+// - Add documentation;
+// - Change parameters to Functional Options: https://github.com/uber-go/guide/blob/master/style.md#functional-options
+func newHTTPRepository(addr, port string) repo {
 	return repo{
 		addr:    addr,
 		port:    port,
@@ -43,7 +47,10 @@ func newRepo(addr, port string) repo {
 }
 
 func (r repo) create(acc account) (*account, error) {
-	const success = 201
+	const (
+		success = 201
+		urlBase = "http://%s:%s/v1/organisation/accounts"
+	)
 	wrapErr := func(err error, msg string) error {
 		return errors.Wrapf(err, "%s create %s", _errContext, msg)
 	}
@@ -53,11 +60,12 @@ func (r repo) create(acc account) (*account, error) {
 		return nil, wrapErr(err, "marshal")
 	}
 
-	url := fmt.Sprintf("http://%s:%s/v1/organisation/accounts", r.addr, r.port)
+	url := fmt.Sprintf(urlBase, r.addr, r.port)
 	resp, err := r.post(url, _defaultContentType, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, wrapErr(err, "request")
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != success {
 		return nil, wrapErr(errors.New("not success != 201"), "status code verification")

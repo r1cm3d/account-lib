@@ -35,7 +35,7 @@ type (
 // TODO:
 // - make it exported;
 // - Add documentation;
-// - Change parameters to Functional Options: https://github.com/uber-go/guide/blob/master/style.md#functional-options
+// - Change parameters to Functional Options: https://github.com/uber-go/guide/blob/master/style.md#functional-options;
 func newHttpRepository(addr, port string) httpRepository {
 	return httpRepository{
 		addr:    addr,

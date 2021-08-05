@@ -60,6 +60,53 @@ func TestCreate_Error(t *testing.T) {
 	}
 }
 
+func TestEntity(t *testing.T) {
+	assert := func(propName string, got, want interface{}) {
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Entity_%s got: %v, want: %v", propName, got, want)
+		}
+	}
+	entity := Entity{
+		id:                      _uuidStub,
+		version:                 _versionStub,
+		organisationID:          _organisationUUIDStub,
+		classification:          Classification(_classificationStub),
+		matchingOptOut:          _matchingOptOutStub,
+		number:                  _numberStub,
+		alternativeNames:        _alternativeNamesStub,
+		bankID:                  _bankIDStub,
+		bankIDCode:              _bankIDCodeStub,
+		baseCurrency:            Currency(_baseCurrencyStub),
+		bic:                     _bicStub,
+		country:                 Country(_countryStub),
+		iban:                    _ibanStub,
+		jointAccount:            _jointAccountStub,
+		name:                    _nameStub,
+		secondaryIdentification: _secondaryIdentificationStub,
+		status:                  Status(_statusStub),
+		switched:                _switchedStub,
+	}
+
+	assert("ID", entity.ID(), _uuidStub)
+	assert("Version", entity.Version(), _versionStub)
+	assert("OrganisationID", entity.OrganisationID(), _organisationUUIDStub)
+	assert("Classification", entity.Classification(), Classification(_classificationStub))
+	assert("MatchingOptOut", entity.MatchingOptOut(), _matchingOptOutStub)
+	assert("Number", entity.Number(), _numberStub)
+	assert("AlternativeNames", entity.AlternativeNames(), _alternativeNamesStub)
+	assert("BankID", entity.BankID(), _bankIDStub)
+	assert("BankIDCode", entity.BankIDCode(), _bankIDCodeStub)
+	assert("BaseCurrency", entity.BaseCurrency(), Currency(_baseCurrencyStub))
+	assert("Bic", entity.Bic(), _bicStub)
+	assert("Country", entity.Country(), Country(_countryStub))
+	assert("Iban", entity.Iban(), _ibanStub)
+	assert("JointAccount", entity.JointAccount(), _jointAccountStub)
+	assert("Name", entity.Name(), _nameStub)
+	assert("SecondaryIdentification", entity.SecondaryIdentification(), _secondaryIdentificationStub)
+	assert("Status", entity.Status(), Status(_statusStub))
+	assert("Switched", entity.Switched(), _switchedStub)
+}
+
 const (
 	_idStub                      = "ad27e265-9605-4b4b-a0e5-3003ea9cc4dc"
 	_organisationIDStub          = "eb0bd6f5-c3f5-44b2-b677-acd23cdde73c"

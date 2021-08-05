@@ -138,7 +138,7 @@ func (r mapper) ofAcc(d data) (*Entity, error) {
 
 	att := d.Attributes
 	if att == nil {
-		return nil, errors.Wrap(err, "Attributes is nil")
+		return nil, errors.New("att.Attributes is nil")
 	}
 
 	return &Entity{

@@ -60,6 +60,26 @@ func TestCreate_Error(t *testing.T) {
 	}
 }
 
+func TestOfAcc_Error(t *testing.T) {
+	cases := []struct {
+		name string
+		in   data
+		want error
+	}{
+		{"id error", dataWithIdErr, errors.New("id parse: 3rr0r: invalid UUID length: 5")},
+		{"organisationID error", dataWithOrganizationIDErr, errors.New("organisationID parse: 0RG4N1Z4T10N_3rr0r: invalid UUID length: 18")},
+		{"att error", dataWithAttErr, errors.New("att.Attributes is nil")},
+	}
+	m := mapper{}
+
+	for _, tt := range cases {
+		_, got := m.ofAcc(tt.in)
+		if got.Error() != tt.want.Error() {
+			t.Errorf("OfAcc_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+		}
+	}
+}
+
 func TestEntity(t *testing.T) {
 	assert := func(propName string, got, want interface{}) {
 		if !reflect.DeepEqual(got, want) {
@@ -150,6 +170,18 @@ var (
 		inputMapper:  mapper{},
 		outputMapper: mapper{},
 		creator:      mockCreatorOk{assertArg: true},
+	}
+	dataWithIdErr = data{
+		ID: "3rr0r",
+	}
+	dataWithOrganizationIDErr = data{
+		ID:             _idStub,
+		OrganisationID: "0RG4N1Z4T10N_3rr0r",
+	}
+	dataWithAttErr = data{
+		Attributes:     nil,
+		ID:             _idStub,
+		OrganisationID: _organisationIDStub,
 	}
 )
 

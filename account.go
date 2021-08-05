@@ -63,7 +63,7 @@ type (
 		create(data) (*data, error)
 	}
 	inputMapper interface {
-		toAcc(CreateRequest) (*data, error)
+		toAcc(CreateRequest) *data
 	}
 	outputMapper interface {
 		ofAcc(data) (*Entity, error)
@@ -85,10 +85,7 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 	wrapErr := func(err error, msg string) error {
 		return errors.Wrapf(err, "%s create_%s: organisationID: %s, country: %s", s.errCtx, msg, cr.OrganisationID, cr.Country)
 	}
-	data, err := s.toAcc(cr)
-	if err != nil {
-		return nil, wrapErr(err, "toAcc")
-	}
+	data := s.toAcc(cr)
 
 	ret, err := s.create(*data)
 	if err != nil {
@@ -103,7 +100,7 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 	return acc, nil
 }
 
-func (r mapper) toAcc(cr CreateRequest) (*data, error) {
+func (r mapper) toAcc(cr CreateRequest) *data {
 	defaultVersion := int64(0)
 	return &data{
 		Attributes: &attributes{
@@ -125,7 +122,7 @@ func (r mapper) toAcc(cr CreateRequest) (*data, error) {
 		OrganisationID: cr.OrganisationID,
 		Type:           "accounts",
 		Version:        &defaultVersion,
-	}, nil
+	}
 }
 
 func (r mapper) ofAcc(d data) (*Entity, error) {

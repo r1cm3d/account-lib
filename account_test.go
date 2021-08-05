@@ -47,7 +47,6 @@ func TestCreate_Error(t *testing.T) {
 		in   Service
 		want error
 	}{
-		{"toAcc error", serviceWithInputMapperError, errors.New("service create_toAcc: organisationID: , country: : toAcc error")},
 		{"repo create error", serviceWithCreateError, errors.New("service create_repo_create: organisationID: , country: : repo create error")},
 		{"ofAcc error", serviceWithOutputMapperError, errors.New("service create_ofAcc: organisationID: , country: : ofAcc error")},
 	}
@@ -88,18 +87,14 @@ var (
 )
 
 var (
-	serviceWithInputMapperError = Service{
-		errCtx:      "service",
-		inputMapper: mockInputMapperErr{},
-	}
 	serviceWithCreateError = Service{
 		errCtx:      "service",
-		inputMapper: mockInputMapperOk{},
+		inputMapper: mockInputMapper{},
 		creator:     mockCreatorErr{},
 	}
 	serviceWithOutputMapperError = Service{
 		errCtx:       "service",
-		inputMapper:  mockInputMapperOk{},
+		inputMapper:  mockInputMapper{},
 		creator:      mockCreatorOk{},
 		outputMapper: mockOutputMapperErr{},
 	}
@@ -139,8 +134,7 @@ type (
 	mockCreatorOk  struct {
 		assertArg bool
 	}
-	mockInputMapperErr  struct{}
-	mockInputMapperOk   struct{}
+	mockInputMapper     struct{}
 	mockOutputMapperErr struct{}
 )
 
@@ -205,12 +199,8 @@ func (m mockCreatorOk) create(d data) (*data, error) {
 	}, nil
 }
 
-func (m mockInputMapperErr) toAcc(CreateRequest) (*data, error) {
-	return nil, errors.New("toAcc error")
-}
-
-func (m mockInputMapperOk) toAcc(CreateRequest) (*data, error) {
-	return &data{}, nil
+func (m mockInputMapper) toAcc(_ CreateRequest) *data {
+	return &data{}
 }
 
 func (m mockOutputMapperErr) ofAcc(data) (*Entity, error) {

@@ -1,4 +1,4 @@
-package acc
+package account
 
 import (
 	"bytes"
@@ -130,6 +130,7 @@ func (r httpRepository) create(acc data) (*data, error) {
 	}
 	defer resp.Body.Close()
 
+	// TODO: check client errors
 	if resp.StatusCode != success {
 		return nil, wrapErr(errors.New("not success != 201"), "status code verification")
 	}
@@ -146,7 +147,7 @@ func (r httpRepository) create(acc data) (*data, error) {
 // TODO: improve it
 func (r httpRepository) health() error {
 	// TODO: use mock for it
-	resp, err := http.Get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.addr))
+	resp, err := http.Get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.port))
 
 	if err != nil {
 		return err

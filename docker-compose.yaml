@@ -40,3 +40,13 @@ services:
     environment:
       - SKIP_SETCAP=1
       - VAULT_DEV_ROOT_TOKEN_ID=8fb95528-57c6-422e-9722-d2147bcba8ed
+
+  it-test:
+    image: golang:1.16
+    stop_signal: SIGKILL
+    command: "make it-test"
+    working_dir: /go/src/github.com/r1cm3d/account-lib
+    volumes:
+      - ./:/go/src/github.com/r1cm3d/account-lib
+    links:
+      - accountapi

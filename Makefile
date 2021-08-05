@@ -22,16 +22,20 @@ assemble: fmt lint vet
 	@echo "\nBuilding application\n"
 	@go build
 
-unit-test: assemble
+unit-test:
 	@echo "\nRunning unit tests\n"
 	@go test -cover -short ./...
 
-it-test: assemble install
+it-test: unit-test
 	@echo "\nRunning integration tests\n"
 	@go test -cover -run Integration ./...
 
 test: fmt unit-test install it-test
 	@echo "\nRunning tests\n"
+
+docker-test:
+	@echo "\nRunning all test in a containerized environment\n"
+	@docker-compose run --rm it-test
 
 install:
 	@echo "\nStarting fake account API\n"

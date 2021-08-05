@@ -19,7 +19,7 @@ func TestRepositoryCreateIntegration(t *testing.T) {
 
 	got, err := repo.create(account)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	fmt.Printf("Created data: %v", got.ID)
@@ -127,7 +127,7 @@ func addStub(t *testing.T) {
 
 var (
 	_fakeStubID = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
-	_itAddress  = "0.0.0.0"
+	_itAddress  = "accountapi"
 	_itPort     = "8080"
 )
 

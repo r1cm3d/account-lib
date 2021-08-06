@@ -52,7 +52,8 @@ func TestRepositoryCreate_Error(t *testing.T) {
 		{"marshal", repositoryWithMarshalError, errors.New("http_repository#create() marshal: error on marshal")},
 		{"post", repositoryWithPostError, errors.New("http_repository#create() request: error on post")},
 		{"unsuccessfully status code", repositoryWithUnsuccessfullyStatusCode, errors.New("http_repository#handleCreateResp() status_code_verification: != (201|400)")},
-		{"decode", repositoryWithDecodeError, errors.New("http_repository#parseSuccess() decode: error on decode")},
+		{"decode success error", repositoryWithDecodeSuccessError, errors.New("http_repository#parseSuccess() decode: error on decode success")},
+		{"decode badRequest error", repositoryWithDecodeBadRequestError, errors.New("http_repository#parseClientError() decode: error on decode badRequest")},
 	}
 	acc := stubAccount()
 
@@ -180,7 +181,7 @@ var (
 			}, nil
 		},
 	}
-	repositoryWithDecodeError = httpRepository{
+	repositoryWithDecodeSuccessError = httpRepository{
 		errCtx:  "http_repository",
 		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
@@ -189,7 +190,18 @@ var (
 				Body:       mockCloser{bytes.NewBuffer(mockedBytes)},
 			}, nil
 		},
-		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode") },
+		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode success") },
+	}
+	repositoryWithDecodeBadRequestError = httpRepository{
+		errCtx:  "http_repository",
+		marshal: func(v interface{}) ([]byte, error) { return mockedBytes, nil },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 400,
+				Body:       mockCloser{bytes.NewBuffer(mockedBytes)},
+			}, nil
+		},
+		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode badRequest") },
 	}
 )
 

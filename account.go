@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO: Organize order
+
 type (
 	Classification string
 	Status         string

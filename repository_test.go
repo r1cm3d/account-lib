@@ -14,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO: Organize order
+
 func TestRepositoryCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
@@ -28,7 +30,7 @@ func TestRepositoryCreateIntegration(t *testing.T) {
 	fmt.Printf("Created data: %v", got.ID)
 }
 
-func TestRepositoryCreateIntegration_Error(t *testing.T) {
+func TestRepositoryCreate_ErrorIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccountFailed()
@@ -42,6 +44,31 @@ func TestRepositoryCreateIntegration_Error(t *testing.T) {
 	fmt.Printf("Message error: %v", err.Error())
 }
 
+func TestHealthIntegration(t *testing.T) {
+	skipShort(t)
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
+
+	if err := repo.health(); err != nil {
+		t.Fail()
+	}
+}
+
+func TestHealth_Error(t *testing.T) {
+	cases := []struct {
+		name string
+		in   httpRepository
+		want error
+	}{
+		{"get error", repositoryWithGetError, errors.New("http_repository#health() get: error on get")},
+	}
+
+	for _, tt := range cases {
+		got := tt.in.health()
+		if got.Error() != tt.want.Error() {
+			t.Errorf("RepositoryHealth_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+		}
+	}
+}
 
 func TestRepositoryCreate_Error(t *testing.T) {
 	cases := []struct {
@@ -62,16 +89,6 @@ func TestRepositoryCreate_Error(t *testing.T) {
 		if got.Error() != tt.want.Error() {
 			t.Errorf("RepositoryCreate_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
 		}
-	}
-}
-
-// TODO: improve it
-func TestHealth(t *testing.T) {
-	skipShort(t)
-	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
-
-	if err := repo.health(); err != nil {
-		t.Fail()
 	}
 }
 
@@ -102,7 +119,7 @@ func stubAccount() data {
 
 func stubAccountFailed() data {
 	return data{
-		Type:           "accounts",
+		Type: "accounts",
 	}
 }
 
@@ -163,6 +180,10 @@ var (
 	repositoryWithMarshalError = httpRepository{
 		errCtx:  "http_repository",
 		marshal: func(v interface{}) ([]byte, error) { return nil, errors.New("error on marshal") },
+	}
+	repositoryWithGetError = httpRepository{
+		errCtx: "http_repository",
+		get:    func(url string) (resp *http.Response, err error) { return nil, errors.New("error on get") },
 	}
 	repositoryWithPostError = httpRepository{
 		errCtx:  "http_repository",

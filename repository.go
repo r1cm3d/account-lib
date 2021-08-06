@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO: Organize order
+
 const (
 	_defaultHTTPAddress = "0.0.0.0"
 	_defaultHTTPPort    = "8080"
@@ -30,10 +32,12 @@ type (
 type (
 	marshal        func(v interface{}) ([]byte, error)
 	post           func(url, contentType string, body io.Reader) (resp *http.Response, err error)
+	get            func(url string) (resp *http.Response, err error)
 	decode         func(d *json.Decoder, v interface{}) error
 	httpRepository struct {
 		marshal
 		post
+		get
 		decode
 
 		addr     string
@@ -106,6 +110,7 @@ func NewHTTPRepository(opts ...httpOption) httpRepository {
 		contType: "application/json",
 		marshal:  json.Marshal,
 		post:     http.Post,
+		get:      http.Get,
 		decode:   func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
 	}
 }
@@ -172,22 +177,13 @@ func (r httpRepository) parseClientError(body io.ReadCloser) (*data, error) {
 
 }
 
-// TODO: improve it 4
 func (r httpRepository) health() error {
-	// TODO: use mock for it
-	resp, err := http.Get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.port))
-
+	resp, err := r.get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.port))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "%s#health() get", r.errCtx)
 	}
-	// TODO: use mock for it
 	defer resp.Body.Close()
-	var data map[string]interface{}
-	// TODO: use mock for it
-	json.NewDecoder(resp.Body).Decode(&data)
 
-	// TODO: unmarshal status and try status code
-	fmt.Println(data)
 	return nil
 }
 

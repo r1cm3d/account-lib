@@ -10,13 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: Organize order
-
-const (
-	_defaultHTTPAddress = "0.0.0.0"
-	_defaultHTTPPort    = "8080"
-)
-
 type (
 	httpOption interface {
 		apply(*httpOptions)
@@ -75,6 +68,11 @@ type (
 		Status                  *string  `json:"status,omitempty"`
 		Switched                *bool    `json:"switched,omitempty"`
 	}
+)
+
+const (
+	_defaultHTTPAddress = "0.0.0.0"
+	_defaultHTTPPort    = "8080"
 )
 
 // WithAddr attaches server address to HTTP client.

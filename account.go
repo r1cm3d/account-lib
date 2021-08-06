@@ -5,8 +5,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: Organize order
-
 type (
 	Classification string
 	Status         string
@@ -50,7 +48,6 @@ type (
 		status                  Status
 		switched                bool
 	}
-
 	Service struct {
 		inputMapper
 		outputMapper
@@ -58,6 +55,9 @@ type (
 
 		errCtx string
 	}
+)
+
+type (
 	mapper     struct{}
 	repository interface {
 		creator
@@ -100,6 +100,84 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 	}
 
 	return acc, nil
+}
+
+func (a Entity) ID() uuid.UUID {
+	return a.id
+}
+
+func (a Entity) Version() int64 {
+	return a.version
+}
+
+func (a Entity) OrganisationID() uuid.UUID {
+	return a.organisationID
+}
+
+func (a Entity) Classification() Classification {
+	return a.classification
+}
+
+func (a Entity) MatchingOptOut() bool {
+	return a.matchingOptOut
+}
+
+func (a Entity) Number() string {
+	return a.number
+}
+
+func (a Entity) AlternativeNames() []string {
+	newAltNam := make([]string, len(a.alternativeNames))
+	copy(newAltNam, a.alternativeNames)
+
+	return newAltNam
+}
+
+func (a Entity) BankID() string {
+	return a.bankID
+}
+
+func (a Entity) BankIDCode() string {
+	return a.bankIDCode
+}
+
+func (a Entity) BaseCurrency() Currency {
+	return a.baseCurrency
+}
+
+func (a Entity) Bic() string {
+	return a.bic
+}
+
+func (a Entity) Country() Country {
+	return a.country
+}
+
+func (a Entity) Iban() string {
+	return a.iban
+}
+
+func (a Entity) JointAccount() bool {
+	return a.jointAccount
+}
+
+func (a Entity) Name() []string {
+	newName := make([]string, len(a.name))
+	copy(newName, a.name)
+
+	return newName
+}
+
+func (a Entity) SecondaryIdentification() string {
+	return a.secondaryIdentification
+}
+
+func (a Entity) Status() Status {
+	return a.status
+}
+
+func (a Entity) Switched() bool {
+	return a.switched
 }
 
 func (r mapper) toAcc(cr CreateRequest) *data {
@@ -199,82 +277,4 @@ func (r mapper) ofAcc(d data) (*Entity, error) {
 		status:                  status,
 		switched:                switched,
 	}, nil
-}
-
-func (a Entity) ID() uuid.UUID {
-	return a.id
-}
-
-func (a Entity) Version() int64 {
-	return a.version
-}
-
-func (a Entity) OrganisationID() uuid.UUID {
-	return a.organisationID
-}
-
-func (a Entity) Classification() Classification {
-	return a.classification
-}
-
-func (a Entity) MatchingOptOut() bool {
-	return a.matchingOptOut
-}
-
-func (a Entity) Number() string {
-	return a.number
-}
-
-func (a Entity) AlternativeNames() []string {
-	newAltNam := make([]string, len(a.alternativeNames))
-	copy(newAltNam, a.alternativeNames)
-
-	return newAltNam
-}
-
-func (a Entity) BankID() string {
-	return a.bankID
-}
-
-func (a Entity) BankIDCode() string {
-	return a.bankIDCode
-}
-
-func (a Entity) BaseCurrency() Currency {
-	return a.baseCurrency
-}
-
-func (a Entity) Bic() string {
-	return a.bic
-}
-
-func (a Entity) Country() Country {
-	return a.country
-}
-
-func (a Entity) Iban() string {
-	return a.iban
-}
-
-func (a Entity) JointAccount() bool {
-	return a.jointAccount
-}
-
-func (a Entity) Name() []string {
-	newName := make([]string, len(a.name))
-	copy(newName, a.name)
-
-	return newName
-}
-
-func (a Entity) SecondaryIdentification() string {
-	return a.secondaryIdentification
-}
-
-func (a Entity) Status() Status {
-	return a.status
-}
-
-func (a Entity) Switched() bool {
-	return a.switched
 }

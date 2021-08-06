@@ -26,8 +26,12 @@ unit-test:
 	@echo "\nRunning unit tests\n"
 	@go test -cover -short ./...
 
+it-test-locally: unit-test
+	@echo "\nRunning integration tests locally\n"
+	@go test -cover -run Integration ./...
+
 it-test: unit-test
-	@echo "\nRunning integration tests\n"
+	@echo "\nRunning integration tests in container environment\n"
 	@go test -cover -run Integration ./... -args -itaddr=accountapi
 
 test: fmt unit-test install it-test

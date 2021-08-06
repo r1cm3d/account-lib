@@ -11,6 +11,7 @@ type (
 	Currency       string
 	Country        string
 	CreateRequest  struct {
+		id                      string
 		OrganisationID          string
 		Classification          string
 		MatchingOptOut          bool
@@ -70,7 +71,6 @@ type (
 	}
 )
 
-// TODO: Create an integration test for all of it. Maybe use a docker container
 func NewService(repo repository) *Service {
 	mapper := mapper{}
 	return &Service{
@@ -122,6 +122,7 @@ func (r mapper) toAcc(cr CreateRequest) *data {
 		OrganisationID: cr.OrganisationID,
 		Type:           "accounts",
 		Version:        &defaultVersion,
+		ID:             cr.id,
 	}
 }
 
@@ -141,25 +142,60 @@ func (r mapper) ofAcc(d data) (*Entity, error) {
 		return nil, errors.New("att.Attributes is nil")
 	}
 
+	var version int64
+	if d.Version != nil {
+		version = *d.Version
+	}
+
+	var classification Classification
+	if att.Classification != nil {
+		classification = Classification(*att.Classification)
+	}
+
+	var matchingOptOut bool
+	if att.MatchingOptOut != nil {
+		matchingOptOut = *att.MatchingOptOut
+	}
+
+	var country Country
+	if att.Country != nil {
+		country = Country(*att.Country)
+	}
+
+	var jointAccount bool
+	if att.JointAccount != nil {
+		jointAccount = *att.JointAccount
+	}
+
+	var status Status
+	if att.Status != nil {
+		status = Status(*att.Status)
+	}
+
+	var switched bool
+	if att.Switched != nil {
+		switched = *att.Switched
+	}
+
 	return &Entity{
 		id:                      id,
-		version:                 *d.Version,
+		version:                 version,
 		organisationID:          organisationID,
-		classification:          Classification(*att.Classification),
-		matchingOptOut:          *att.MatchingOptOut,
+		classification:          classification,
+		matchingOptOut:          matchingOptOut,
 		number:                  att.Number,
 		alternativeNames:        att.AlternativeNames,
 		bankID:                  att.BankID,
 		bankIDCode:              att.BankIDCode,
 		baseCurrency:            Currency(att.BaseCurrency),
 		bic:                     att.Bic,
-		country:                 Country(*att.Country),
+		country:                 country,
 		iban:                    att.Iban,
-		jointAccount:            *att.JointAccount,
+		jointAccount:            jointAccount,
 		name:                    att.Name,
 		secondaryIdentification: att.SecondaryIdentification,
-		status:                  Status(*att.Status),
-		switched:                *att.Switched,
+		status:                  status,
+		switched:                switched,
 	}, nil
 }
 

@@ -2,39 +2,44 @@ package account
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"reflect"
 	"testing"
 )
 
-func TestCreate(t *testing.T) {
+func TestAccountCreateIntegration(t *testing.T) {
+	skipShort(t)
+	deleteStub(t)
+
+	svc := NewService(NewHTTPRepository(WithAddr(_itAddress)))
+
+	got, err := svc.Create(basicFilledCreateRequest)
+	if err != nil {
+		t.Fatal()
+	}
+
+	fmt.Printf("Created data: %v", got.ID())
+}
+
+func TestAccountCreate(t *testing.T) {
+	type in struct {
+		cr  CreateRequest
+		svc Service
+	}
 	cases := []struct {
 		name string
-		in   Service
+		in
 		want *Entity
 	}{
-		{"fully filled", serviceWithMockedRepository, filledEntityStub()},
-	}
-	cr := CreateRequest{
-		OrganisationID:          _organisationIDStub,
-		Number:                  _numberStub,
-		AlternativeNames:        _alternativeNamesStub,
-		BankID:                  _bankIDStub,
-		BankIDCode:              _bankIDCodeStub,
-		BaseCurrency:            _baseCurrencyStub,
-		Bic:                     _bicStub,
-		Country:                 _countryStub,
-		Iban:                    _ibanStub,
-		JointAccount:            _jointAccountStub,
-		Name:                    _nameStub,
-		SecondaryIdentification: _secondaryIdentificationStub,
-		Switched:                _switchedStub,
-		MatchingOptOut:          _matchingOptOutStub,
-		Classification:          _classificationStub,
+		{"fully filled", in{fullyFilledCreateRequest, serviceWithMockedRepositoryFullyFilled}, fullyFilledEntity},
+		{"basic filled", in{basicFilledCreateRequest, serviceWithMockedRepositoryBasicFilled}, basicFilledEntity},
+		// TODO: add non mandatory scenarios
+		// TODO: add with country builders
 	}
 
 	for _, tt := range cases {
-		got, _ := tt.in.Create(cr)
+		got, _ := tt.in.svc.Create(tt.in.cr)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("Create(%v) got: %v, want: %v", tt.name, got, tt.want)
 		}
@@ -162,14 +167,20 @@ var (
 	serviceWithOutputMapperError = Service{
 		errCtx:       "service",
 		inputMapper:  mockInputMapper{},
-		creator:      mockCreatorOk{},
+		creator:      mockCreatorOk{expData: fullyFilledData},
 		outputMapper: mockOutputMapperErr{},
 	}
-	serviceWithMockedRepository = Service{
+	serviceWithMockedRepositoryFullyFilled = Service{
 		errCtx:       "service",
 		inputMapper:  mapper{},
 		outputMapper: mapper{},
-		creator:      mockCreatorOk{assertArg: true},
+		creator:      mockCreatorOk{assertArg: true, expData: fullyFilledData},
+	}
+	serviceWithMockedRepositoryBasicFilled = Service{
+		errCtx:       "service",
+		inputMapper:  mapper{},
+		outputMapper: mapper{},
+		creator:      mockCreatorOk{assertArg: true, expData: basicFilledData},
 	}
 	dataWithIdErr = data{
 		ID: "3rr0r",
@@ -183,10 +194,25 @@ var (
 		ID:             _idStub,
 		OrganisationID: _organisationIDStub,
 	}
-)
-
-func filledEntityStub() *Entity {
-	return &Entity{
+	fullyFilledCreateRequest = CreateRequest{
+		id:                      _idStub,
+		OrganisationID:          _organisationIDStub,
+		Number:                  _numberStub,
+		AlternativeNames:        _alternativeNamesStub,
+		BankID:                  _bankIDStub,
+		BankIDCode:              _bankIDCodeStub,
+		BaseCurrency:            _baseCurrencyStub,
+		Bic:                     _bicStub,
+		Country:                 _countryStub,
+		Iban:                    _ibanStub,
+		JointAccount:            _jointAccountStub,
+		Name:                    _nameStub,
+		SecondaryIdentification: _secondaryIdentificationStub,
+		Switched:                _switchedStub,
+		MatchingOptOut:          _matchingOptOutStub,
+		Classification:          _classificationStub,
+	}
+	fullyFilledEntity = &Entity{
 		id:                      _uuidStub,
 		version:                 _versionStub,
 		organisationID:          _organisationUUIDStub,
@@ -206,54 +232,7 @@ func filledEntityStub() *Entity {
 		status:                  Status(_statusStub),
 		switched:                _switchedStub,
 	}
-}
-
-type (
-	mockCreatorErr struct{}
-	mockCreatorOk  struct {
-		assertArg bool
-	}
-	mockInputMapper     struct{}
-	mockOutputMapperErr struct{}
-)
-
-func (m mockCreatorErr) create(_ data) (*data, error) {
-	return nil, errors.New("repo create error")
-}
-
-func (m mockCreatorOk) create(d data) (*data, error) {
-	expInput := &data{
-		Attributes: &attributes{
-			Number:                  _numberStub,
-			AlternativeNames:        _alternativeNamesStub,
-			Classification:          &_classificationStub,
-			MatchingOptOut:          &_matchingOptOutStub,
-			BankID:                  _bankIDStub,
-			BankIDCode:              _bankIDCodeStub,
-			BaseCurrency:            _baseCurrencyStub,
-			Bic:                     _bicStub,
-			Country:                 &_countryStub,
-			Iban:                    _ibanStub,
-			JointAccount:            &_jointAccountStub,
-			Name:                    _nameStub,
-			SecondaryIdentification: _secondaryIdentificationStub,
-			Switched:                &_switchedStub,
-		},
-		OrganisationID: _organisationIDStub,
-		Type:           "accounts",
-		Version:        &_versionStub,
-	}
-
-	if m.assertArg &&
-		(expInput.ID != d.ID ||
-			expInput.Type != d.Type ||
-			expInput.OrganisationID != d.OrganisationID ||
-			!reflect.DeepEqual(expInput.Version, d.Version) ||
-			!reflect.DeepEqual(expInput.Attributes, d.Attributes)) {
-		return nil, errors.New("mockCreatorOk expInput did not match with data")
-	}
-
-	return &data{
+	fullyFilledData = data{
 		Attributes: &attributes{
 			Classification:          &_classificationStub,
 			MatchingOptOut:          &_matchingOptOutStub,
@@ -271,11 +250,111 @@ func (m mockCreatorOk) create(d data) (*data, error) {
 			Status:                  &_statusStub,
 			Switched:                &_switchedStub,
 		},
-		ID:             _idStub,
 		OrganisationID: _organisationIDStub,
 		Type:           "accounts",
 		Version:        &_versionStub,
-	}, nil
+		ID:             _idStub,
+	}
+	basicFilledCreateRequest = CreateRequest{
+		id:             _fakeStubID,
+		OrganisationID: _organisationIDStub,
+		Classification: _classificationStub,
+		Number:         _numberStub,
+		BankID:         _bankIDStub,
+		BankIDCode:     _bankIDCodeStub,
+		BaseCurrency:   _baseCurrencyStub,
+		Bic:            _bicStub,
+		Country:        _countryStub,
+		Iban:           _ibanStub,
+		Name:           _nameStub,
+	}
+	basicFilledEntity = &Entity{
+		id:             _fakeStubUUID,
+		version:        _versionStub,
+		organisationID: _organisationUUIDStub,
+		classification: Classification(_classificationStub),
+		number:         _numberStub,
+		bankID:         _bankIDStub,
+		bankIDCode:     _bankIDCodeStub,
+		baseCurrency:   _baseCurrencyStub,
+		bic:            _bicStub,
+		country:        Country(_countryStub),
+		iban:           _ibanStub,
+		name:           _nameStub,
+	}
+	_basicMatchingOptOutStub = false
+	_basicJointAccountStub   = false
+	_basicSwitchedStub       = false
+	basicFilledData          = data{
+		Attributes: &attributes{
+			Number:         _numberStub,
+			BankID:         _bankIDStub,
+			BankIDCode:     _bankIDCodeStub,
+			BaseCurrency:   _baseCurrencyStub,
+			Classification: &_classificationStub,
+			Bic:            _bicStub,
+			Country:        &_countryStub,
+			Iban:           _ibanStub,
+			Name:           _nameStub,
+			MatchingOptOut: &_basicMatchingOptOutStub,
+			JointAccount:   &_basicJointAccountStub,
+			Switched:       &_basicSwitchedStub,
+		},
+		ID:             _fakeStubID,
+		OrganisationID: _organisationIDStub,
+		Type:           "accounts",
+		Version:        &_versionStub,
+	}
+)
+
+type (
+	mockCreatorErr struct{}
+	mockCreatorOk  struct {
+		assertArg bool
+		expData   data
+	}
+	mockInputMapper     struct{}
+	mockOutputMapperErr struct{}
+)
+
+func (m mockCreatorErr) create(_ data) (*data, error) {
+	return nil, errors.New("repo create error")
+}
+
+func (m mockCreatorOk) create(d data) (*data, error) {
+	expInput := &data{
+		Attributes: &attributes{
+			Classification:          m.expData.Attributes.Classification,
+			MatchingOptOut:          m.expData.Attributes.MatchingOptOut,
+			Number:                  m.expData.Attributes.Number,
+			AlternativeNames:        m.expData.Attributes.AlternativeNames,
+			BankID:                  m.expData.Attributes.BankID,
+			BankIDCode:              m.expData.Attributes.BankIDCode,
+			BaseCurrency:            m.expData.Attributes.BaseCurrency,
+			Bic:                     m.expData.Attributes.Bic,
+			Country:                 m.expData.Attributes.Country,
+			Iban:                    m.expData.Attributes.Iban,
+			JointAccount:            m.expData.Attributes.JointAccount,
+			Name:                    m.expData.Attributes.Name,
+			SecondaryIdentification: m.expData.Attributes.SecondaryIdentification,
+			Switched:                m.expData.Attributes.Switched,
+		},
+		OrganisationID: m.expData.OrganisationID,
+		Type:           "accounts",
+		Version:        m.expData.Version,
+		ID:             m.expData.ID,
+	}
+
+	if m.assertArg &&
+		(expInput.ID != d.ID ||
+			expInput.Type != d.Type ||
+			expInput.OrganisationID != d.OrganisationID ||
+			!reflect.DeepEqual(expInput.Version, d.Version) ||
+			!reflect.DeepEqual(expInput.Attributes, d.Attributes)) {
+		return nil, errors.New("mockCreatorOk expInput did not match with data")
+	}
+
+	return &m.expData, nil
 }
 
 func (m mockInputMapper) toAcc(_ CreateRequest) *data {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"io"
 	"log"
@@ -126,9 +127,10 @@ func addStub(t *testing.T) {
 }
 
 var (
-	_fakeStubID = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
-	_itAddress  = "accountapi"
-	_itPort     = "8080"
+	_fakeStubID      = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
+	_fakeStubUUID, _ = uuid.Parse(_fakeStubID)
+	_itAddress       = "accountapi"
+	_itPort          = "8080"
 )
 
 var (

@@ -26,6 +26,7 @@ unit-test:
 	@echo "\nRunning unit tests\n"
 	@go test -cover -short ./...
 
+# TODO: pass a flag with address
 it-test: unit-test
 	@echo "\nRunning integration tests\n"
 	@go test -cover -run Integration ./...
@@ -33,13 +34,14 @@ it-test: unit-test
 test: fmt unit-test install it-test
 	@echo "\nRunning tests\n"
 
+# TODO: pass a flag with address
 docker-test:
 	@echo "\nRunning all test in a containerized environment\n"
 	@docker-compose run --rm it-test
 
 install:
 	@echo "\nStarting fake account API\n"
-	@docker-compose up -d --force-recreate
+	@docker-compose up -d --force-recreate --remove-orphans
 
 uninstall:
 	@echo "\nStopping fake account API\n"

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -110,12 +111,9 @@ func NewHTTPRepository(opts ...httpOption) httpRepository {
 }
 
 func (r httpRepository) create(acc data) (*data, error) {
-	const (
-		success = 201
-		urlBase = "http://%s:%s/v1/organisation/accounts"
-	)
+	const urlBase = "http://%s:%s/v1/organisation/accounts"
 	wrapErr := func(err error, msg string) error {
-		return errors.Wrapf(err, "%s create %s", r.errCtx, msg)
+		return errors.Wrapf(err, "%s#create() %s", r.errCtx, msg)
 	}
 
 	data, err := r.marshal(payload{Data: &acc})
@@ -130,18 +128,48 @@ func (r httpRepository) create(acc data) (*data, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: check client errors 3
-	if resp.StatusCode != success {
-		return nil, wrapErr(errors.New("not success != 201"), "status code verification")
-	}
+	return r.handleCreateResp(resp)
+}
 
+func (r httpRepository) handleCreateResp(resp *http.Response) (*data, error) {
+	const (
+		success     = 201
+		clientError = 400
+	)
+
+	switch resp.StatusCode {
+	case success:
+		return r.parseSuccess(resp.Body)
+	case clientError:
+		return r.parseClientError(resp.Body)
+	default:
+		return nil, errors.New(fmt.Sprintf("%s#handleCreateResp() status_code_verification: != (201|400)", r.errCtx))
+	}
+}
+
+func (r httpRepository) parseSuccess(body io.ReadCloser) (*data, error) {
 	var ret payload
-	dec := json.NewDecoder(resp.Body)
+	dec := json.NewDecoder(body)
 	if err := r.decode(dec, &ret); err != nil {
-		return nil, wrapErr(err, "decode")
+		return nil, errors.Wrapf(err, "%s#parseSuccess() decode", r.errCtx)
 	}
 
 	return ret.Data, nil
+}
+
+func (r httpRepository) parseClientError(body io.ReadCloser) (*data, error) {
+	type clientError struct {
+		Message string `json:"error_message"`
+	}
+
+	var cr clientError
+	dec := json.NewDecoder(body)
+	if err := r.decode(dec, &cr); err != nil {
+		return nil, errors.Wrapf(err, "%s#parseClientError() decode", r.errCtx)
+	}
+
+	return nil, errors.New(cr.Message)
+
 }
 
 // TODO: improve it 4

@@ -28,16 +28,31 @@ func TestRepositoryCreateIntegration(t *testing.T) {
 	fmt.Printf("Created data: %v", got.ID)
 }
 
+func TestRepositoryCreateIntegration_Error(t *testing.T) {
+	skipShort(t)
+	deleteStub(t)
+	account := stubAccountFailed()
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
+
+	_, err := repo.create(account)
+	if err == nil {
+		t.Fatal()
+	}
+
+	fmt.Printf("Message error: %v", err.Error())
+}
+
+
 func TestRepositoryCreate_Error(t *testing.T) {
 	cases := []struct {
 		name string
 		in   httpRepository
 		want error
 	}{
-		{"marshal error", repositoryWithMarshalError, errors.New("http_repository create marshal: error on marshal")},
-		{"post error", repositoryWithPostError, errors.New("http_repository create request: error on post")},
-		{"unsuccessfully status code", repositoryWithUnsuccessfullyStatusCode, errors.New("http_repository create status code verification: not success != 201")},
-		{"decode error", repositoryWithDecodeError, errors.New("http_repository create decode: error on decode")},
+		{"marshal", repositoryWithMarshalError, errors.New("http_repository#create() marshal: error on marshal")},
+		{"post", repositoryWithPostError, errors.New("http_repository#create() request: error on post")},
+		{"unsuccessfully status code", repositoryWithUnsuccessfullyStatusCode, errors.New("http_repository#handleCreateResp() status_code_verification: != (201|400)")},
+		{"decode", repositoryWithDecodeError, errors.New("http_repository#parseSuccess() decode: error on decode")},
 	}
 	acc := stubAccount()
 
@@ -65,6 +80,7 @@ func skipShort(t *testing.T) {
 	}
 }
 
+// TODO: migrated it to var
 func stubAccount() data {
 	country := "GB"
 
@@ -79,6 +95,12 @@ func stubAccount() data {
 		},
 		ID:             _fakeStubID,
 		OrganisationID: "eb0bd6f5-c3f5-44b2-b677-acd23cdde73c",
+		Type:           "accounts",
+	}
+}
+
+func stubAccountFailed() data {
+	return data{
 		Type:           "accounts",
 	}
 }

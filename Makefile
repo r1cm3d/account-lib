@@ -26,15 +26,13 @@ unit-test:
 	@echo "\nRunning unit tests\n"
 	@go test -cover -short ./...
 
-# TODO: pass a flag with address
 it-test: unit-test
 	@echo "\nRunning integration tests\n"
-	@go test -cover -run Integration ./...
+	@go test -cover -run Integration ./... -args -itaddr=accountapi
 
 test: fmt unit-test install it-test
 	@echo "\nRunning tests\n"
 
-# TODO: pass a flag with address
 docker-test:
 	@echo "\nRunning all test in a containerized environment\n"
 	@docker-compose run --rm it-test

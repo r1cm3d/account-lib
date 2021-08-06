@@ -130,7 +130,7 @@ func (r httpRepository) create(acc data) (*data, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: check client errors
+	// TODO: check client errors 3
 	if resp.StatusCode != success {
 		return nil, wrapErr(errors.New("not success != 201"), "status code verification")
 	}
@@ -144,7 +144,7 @@ func (r httpRepository) create(acc data) (*data, error) {
 	return ret.Data, nil
 }
 
-// TODO: improve it
+// TODO: improve it 4
 func (r httpRepository) health() error {
 	// TODO: use mock for it
 	resp, err := http.Get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.port))

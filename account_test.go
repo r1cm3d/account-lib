@@ -3,16 +3,17 @@ package account
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"reflect"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestAccountCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 
-	svc := NewService(NewHTTPRepository(WithAddr(_itAddress)))
+	svc := NewService(NewHTTPRepository(WithAddr(*_itAddress)))
 
 	got, err := svc.Create(basicFilledCreateRequest)
 	if err != nil {
@@ -34,8 +35,7 @@ func TestAccountCreate(t *testing.T) {
 	}{
 		{"fully filled", in{fullyFilledCreateRequest, serviceWithMockedRepositoryFullyFilled}, fullyFilledEntity},
 		{"basic filled", in{basicFilledCreateRequest, serviceWithMockedRepositoryBasicFilled}, basicFilledEntity},
-		// TODO: add non mandatory scenarios
-		// TODO: add with country builders
+		// TODO: add with country builders 4
 	}
 
 	for _, tt := range cases {
@@ -52,8 +52,8 @@ func TestCreate_Error(t *testing.T) {
 		in   Service
 		want error
 	}{
-		{"repo create error", serviceWithCreateError, errors.New("service create_repo_create: organisationID: , country: : repo create error")},
-		{"ofAcc error", serviceWithOutputMapperError, errors.New("service create_ofAcc: organisationID: , country: : ofAcc error")},
+		{"repo", serviceWithCreateError, errors.New("service create_repo_create: organisationID: , country: : repo create error")},
+		{"ofAcc", serviceWithOutputMapperError, errors.New("service create_ofAcc: organisationID: , country: : ofAcc error")},
 	}
 	cr := CreateRequest{}
 
@@ -71,9 +71,9 @@ func TestOfAcc_Error(t *testing.T) {
 		in   data
 		want error
 	}{
-		{"id error", dataWithIdErr, errors.New("id parse: 3rr0r: invalid UUID length: 5")},
-		{"organisationID error", dataWithOrganizationIDErr, errors.New("organisationID parse: 0RG4N1Z4T10N_3rr0r: invalid UUID length: 18")},
-		{"att error", dataWithAttErr, errors.New("att.Attributes is nil")},
+		{"id parser", dataWithIdErr, errors.New("id parse: 3rr0r: invalid UUID length: 5")},
+		{"organisationID parser", dataWithOrganizationIDErr, errors.New("organisationID parse: 0RG4N1Z4T10N_3rr0r: invalid UUID length: 18")},
+		{"att nil", dataWithAttErr, errors.New("att.Attributes is nil")},
 	}
 	m := mapper{}
 

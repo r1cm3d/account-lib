@@ -3,20 +3,22 @@ package account
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"io"
 	"log"
 	"net/http"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 func TestRepositoryCreateIntegration(t *testing.T) {
 	skipShort(t)
 	deleteStub(t)
 	account := stubAccount()
-	repo := NewHTTPRepository(WithAddr(_itAddress), WithPort(_itPort))
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
 
 	got, err := repo.create(account)
 	if err != nil {
@@ -50,7 +52,7 @@ func TestRepositoryCreate_Error(t *testing.T) {
 // TODO: improve it
 func TestHealth(t *testing.T) {
 	skipShort(t)
-	repo := NewHTTPRepository(WithAddr(_itAddress), WithPort(_itPort))
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
 
 	if err := repo.health(); err != nil {
 		t.Fail()
@@ -88,7 +90,7 @@ func deleteStub(t *testing.T) {
 	)
 	client := &http.Client{}
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("http://%s:%s/v1/organisation/accounts/%s?version=0", _itAddress, _itPort, _fakeStubID), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("http://%s:%s/v1/organisation/accounts/%s?version=0", *_itAddress, _itPort, _fakeStubID), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -115,7 +117,7 @@ func addStub(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := http.Post(fmt.Sprintf("http://%s:%s/v1/organisation/accounts", _itAddress, _itPort), "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%s/v1/organisation/accounts", *_itAddress, _itPort), "application/json", bytes.NewBuffer(data))
 
 	if err != nil {
 		t.Fatal(err)
@@ -129,7 +131,7 @@ func addStub(t *testing.T) {
 var (
 	_fakeStubID      = "ad27e265-9605-4b4b-a0e5-3003ea9cc4d2"
 	_fakeStubUUID, _ = uuid.Parse(_fakeStubID)
-	_itAddress       = "accountapi"
+	_itAddress       = flag.String("itaddr", "0.0.0.0", "address of account-api service")
 	_itPort          = "8080"
 )
 

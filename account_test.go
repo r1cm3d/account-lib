@@ -72,7 +72,7 @@ var (
 )
 
 var (
-	_dataWithIdErr = data{
+	_dataWithIDErr = data{
 		ID: "3rr0r",
 	}
 	_dataWithOrganizationIDErr = data{
@@ -261,7 +261,7 @@ func TestOfAcc_Error(t *testing.T) {
 		in   data
 		want error
 	}{
-		{"id parser", _dataWithIdErr, errors.New("id parse: 3rr0r: invalid UUID length: 5")},
+		{"id parser", _dataWithIDErr, errors.New("id parse: 3rr0r: invalid UUID length: 5")},
 		{"organisationID parser", _dataWithOrganizationIDErr, errors.New("organisationID parse: 0RG4N1Z4T10N_3rr0r: invalid UUID length: 18")},
 		{"att nil", _dataWithAttErr, errors.New("att.Attributes is nil")},
 	}

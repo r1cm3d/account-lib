@@ -6,26 +6,88 @@ import (
 )
 
 type (
+	// Classification of account, only used for Confirmation of Payee (CoP).
+	//
+	// CoP: Can be either Personal or Business. Defaults to Personal if not provided.
 	Classification string
-	Status         string
-	Currency       string
-	Country        string
-	CreateRequest  struct {
-		id                      string
-		OrganisationID          string
-		Classification          string
+	// Status of the account.
+	//
+	// FPS: Can be pending, confirmed or closed. (ALWAYS)
+	//
+	// SEPA & FPS Indirect (LHV): Can be either pending, confirmed or failed. (ALWAYS)
+	//
+	// All other services: Can be pending or confirmed. pending is a virtual state and is immediately superseded by confirmed. (ALWAYS)
+	Status string
+	// Currency refers to ISO 4217 code used to identify the base currency of the account, e.g. 'GBP', 'EUR'.
+	//
+	// See: https://www.iso.org/iso-4217-currency-codes.html
+	Currency string
+	// Country refers to ISO 3166-1 code used to identify the domicile of the account, e.g. 'GB', 'FR'.
+	//
+	// See: https://www.iso.org/iso-3166-country-codes.html
+	Country string
+	// CreateRequest groups attributes that are involved when creating an Account resource.
+	//
+	// See: https://api-docs.form3.tech/api.html#organisation-accounts
+	CreateRequest struct {
+		// id is only used for test purposes.
+		id string
+		// OrganisationID of the organisation by which this resource has been created.
+		//
+		// Must be your organisation ID
+		OrganisationID string
+		// Classification is the classification of the account. (REQUIRED)
+		Classification string
+		// MatchingOptOut is a flag to indicate if the account has opted out of account matching, only used for
+		// Confirmation of Payee. (OPTIONAL)
+		//
+		// CoP: Set to true if the account has opted out of account matching. Defaults to false.
 		MatchingOptOut          bool
+		// Number is the unique account number. It will automatically be generated if not provided. If provided, the
+		// account number is not validated. (OPTIONAL)
 		Number                  string
+		// AlternativeNames refers to the primary account names, only used for UK Confirmation of Payee. (OPTIONAL)
+		//
+		// CoP: Up to 3 alternative account names, one in each line of the array.
 		AlternativeNames        []string
+		// BankID refers to local country bank identifier. Format depends on the country. Required for most
+		// countries. (OPTIONAL)
 		BankID                  string
+		// BankIDCode identifies the type of bank ID being used. Required value depends on country attribute. (OPTIONAL)
+		//
+		// See: https://api-docs.form3.tech/api.html#accounts-create-data-table
 		BankIDCode              string
+		// BaseCurrency is the Currency of the account. (CONDITIONAL)
 		BaseCurrency            string
+		// Bic refers to the SWIFT BIC in either 8 or 11 character format e.g. 'NWBKGB22' (OPTIONAL)
 		Bic                     string
+		// Country refers to Country of the account. (OPTIONAL)
 		Country                 string
+		// Iban of the account. Will be calculated from other fields if not supplied. Ignored in SEPA Indirect,
+		// provided by LHV after account generation is successful. (REQUIRED)
 		Iban                    string
+		// JointAccount is a flag to indicate if the account is a joint account, only used for Confirmation of Payee (CoP)
+		//
+		// CoP: Set to true is this is a joint account. Defaults to false if not provided. (OPTIONAL)
 		JointAccount            bool
+		// Name of the account holder, up to four lines possible.
+		//
+		// CoP: Primary account name. For concatenated personal names, joint account names and organisation names,
+		// use the first line. If first and last names of a personal name are separated, use the first line for first
+		// names, the second line for last names. Titles are ignored and should not be entered. (REQUIRED)
+		//
+		// SEPA Indirect: Can be a person or organisation. Only the first line is used, minimum 5 characters. (REQUIRED)
 		Name                    []string
+		// SecondaryIdentification is the additional information to identify the account and account holder, only used
+		// for Confirmation of Payee (CoP).
+		//
+		// CoP: Can be any type of additional identification, e.g. a building society roll number (OPTIONAL)
 		SecondaryIdentification string
+		// Switched is a flag to indicate if the account has been switched away from this organisation, only used for
+		// Confirmation of Payee (CoP).
+		//
+		// CoP: Set to true if the account has been switched using the Current Account Switching Service (CASS),
+		// false otherwise. (OPTIONAL)
 		Switched                bool
 	}
 	Entity struct {

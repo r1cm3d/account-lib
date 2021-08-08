@@ -52,6 +52,12 @@ var (
 				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
 			}, nil
 		},
+		get: func(url string) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 500,
+				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
+			}, nil
+		},
 	}
 	_repositoryWithDecodeSuccessError = httpRepository{
 		errCtx:  "http_repository",
@@ -59,6 +65,12 @@ var (
 		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 			return &http.Response{
 				StatusCode: 201,
+				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
+			}, nil
+		},
+		get: func(url string) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 200,
 				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
 			}, nil
 		},
@@ -73,7 +85,30 @@ var (
 				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
 			}, nil
 		},
+		get: func(url string) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 400,
+				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
+			}, nil
+		},
 		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode badRequest") },
+	}
+	_repositoryWithDecodeNotFoundError = httpRepository{
+		errCtx:  "http_repository",
+		marshal: func(v interface{}) ([]byte, error) { return _mockedBytes, nil },
+		post: func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 400,
+				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
+			}, nil
+		},
+		get: func(url string) (resp *http.Response, err error) {
+			return &http.Response{
+				StatusCode: 404,
+				Body:       mockCloser{bytes.NewBuffer(_mockedBytes)},
+			}, nil
+		},
+		decode: func(d *json.Decoder, v interface{}) error { return errors.New("error on decode notFound") },
 	}
 )
 
@@ -90,7 +125,7 @@ var (
 		ID:             _fakeStubID,
 		OrganisationID: "eb0bd6f5-c3f5-44b2-b677-acd23cdde73c",
 		Type:           "accounts",
-		Version: &_versionStub,
+		Version:        &_versionStub,
 	}
 	_accountFailedStub = data{
 		Type: "accounts",
@@ -165,20 +200,34 @@ func TestFetchIntegration(t *testing.T) {
 	t.Fail()
 }
 
-func TestHealth_Error(t *testing.T) {
+func TestRepositoryFetch_ErrorIntegration(t *testing.T) {
+	skipShort(t)
 	cases := []struct {
 		name string
-		in   httpRepository
-		want error
+		in   string
 	}{
-		{"get error", _repositoryWithGetError, errors.New("http_repository#health() get: error on get")},
+		{"invalid id", "666"},
+		{"not found id", "8b78d27b-4621-4e5a-bfdd-94e0cf784a00"},
 	}
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
 
 	for _, tt := range cases {
-		got := tt.in.health()
-		if got.Error() != tt.want.Error() {
-			t.Errorf("RepositoryHealth_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+		_, err := repo.fetch(tt.in)
+		if err == nil {
+			t.Errorf("RepositoryFetch_ErrorIntegration(%v) in: %v, want: NOT ERROR", tt.name, tt.in)
 		}
+
+		fmt.Printf("Message error: %v", err.Error())
+	}
+}
+
+func TestHealth_Error(t *testing.T) {
+	const msgError = "http_repository#health() get: error on get"
+
+	got := _repositoryWithGetError.health()
+
+	if got.Error() != msgError {
+		t.Errorf("RepositoryHealth_Error got: %v, want: %v", got, msgError)
 	}
 }
 
@@ -200,6 +249,26 @@ func TestRepositoryCreate_Error(t *testing.T) {
 		_, got := tt.in.create(acc)
 		if got.Error() != tt.want.Error() {
 			t.Errorf("RepositoryCreate_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestRepositoryFetch_Error(t *testing.T) {
+	cases := []struct {
+		name string
+		in   httpRepository
+		want error
+	}{
+		{"get", _repositoryWithGetError, errors.New("http_repository#fetch() get: error on get")},
+		{"unsuccessfully status code", _repositoryWithUnsuccessfullyStatusCode, errors.New("http_repository#handleFetchResp() status_code_verification: != (200|40[04])")},
+		{"decode success error", _repositoryWithDecodeSuccessError, errors.New("http_repository#parseSuccess() decode: error on decode success")},
+		{"decode badRequest error", _repositoryWithDecodeBadRequestError, errors.New("http_repository#parseClientError() decode: error on decode badRequest")},
+		{"decode notFound error", _repositoryWithDecodeNotFoundError, errors.New("http_repository#parseClientError() decode: error on decode notFound")},
+	}
+	for _, tt := range cases {
+		_, got := tt.in.fetch(_fakeStubID)
+		if got.Error() != tt.want.Error() {
+			t.Errorf("RepositoryFetch_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
 		}
 	}
 }

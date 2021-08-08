@@ -188,7 +188,24 @@ func (r httpRepository) fetch(id string) (*data, error) {
 	}
 	defer resp.Body.Close()
 
-	return r.parseSuccess(resp.Body)
+	return r.handleFetchResp(resp)
+}
+
+func (r httpRepository) handleFetchResp(resp *http.Response) (*data, error) {
+	const (
+		success     = 200
+		clientError = 400
+		notFound    = 404
+	)
+
+	switch resp.StatusCode {
+	case success:
+		return r.parseSuccess(resp.Body)
+	case clientError,notFound:
+		return r.parseClientError(resp.Body)
+	default:
+		return nil, errors.New(fmt.Sprintf("%s#handleFetchResp() status_code_verification: != (200|40[04])", r.errCtx))
+	}
 }
 
 func (r httpRepository) health() error {

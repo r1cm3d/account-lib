@@ -189,6 +189,7 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 // Fetch gets a single account using the account ID.
 //
 // See: https://api-docs.form3.tech/api.html#organisation-accounts-fetch
+// TODO: change argument to FetchRequest interface implemented by Entity
 func (s Service) Fetch(id string) (*Entity, error) {
 	wrapErr := func(err error, msg string) error {
 		return errors.Wrapf(err, "%s fetch_%s: id: %s", s.errCtx, msg, id)

@@ -23,14 +23,14 @@ type (
 )
 
 type (
+	client interface {
+		request(method method, url string, body io.Reader) (*http.Response, error)
+	}
 	marshal        func(v interface{}) ([]byte, error)
-	post           func(url, contentType string, body io.Reader) (resp *http.Response, err error)
-	get            func(url string) (resp *http.Response, err error)
 	decode         func(d *json.Decoder, v interface{}) error
 	httpRepository struct {
 		marshal
-		post
-		get
+		client
 		decode
 
 		addr     string
@@ -75,22 +75,6 @@ const (
 	_defaultHTTPPort    = "8080"
 )
 
-// WithAddr attaches server address to HTTP client.
-// Default is 0.0.0.0
-//
-// See: https://github.com/uber-go/guide/blob/master/style.md#functional-options
-func WithAddr(addr string) httpOption {
-	return addrOption(addr)
-}
-
-// WithPort attaches server TCP port to HTTP client.
-// Default is 8080
-//
-// See: https://github.com/uber-go/guide/blob/master/style.md#functional-options
-func WithPort(port string) httpOption {
-	return portOption(port)
-}
-
 // NewHTTPRepository instantiates a httpRepository based on httpOption(s) passed as arguments. If no argument is passed
 // the defaults will be used.
 //
@@ -114,10 +98,25 @@ func NewHTTPRepository(opts ...httpOption) httpRepository {
 		errCtx:   "http_repository",
 		contType: "application/json",
 		marshal:  json.Marshal,
-		post:     http.Post,
-		get:      http.Get,
+		client:   httpclient{},
 		decode:   func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
 	}
+}
+
+// WithAddr attaches server address to HTTP client.
+// Default is 0.0.0.0
+//
+// See: https://github.com/uber-go/guide/blob/master/style.md#functional-options
+func WithAddr(addr string) httpOption {
+	return addrOption(addr)
+}
+
+// WithPort attaches server TCP port to HTTP client.
+// Default is 8080
+//
+// See: https://github.com/uber-go/guide/blob/master/style.md#functional-options
+func WithPort(port string) httpOption {
+	return portOption(port)
 }
 
 func (r httpRepository) create(acc data) (*data, error) {
@@ -132,7 +131,7 @@ func (r httpRepository) create(acc data) (*data, error) {
 	}
 
 	url := fmt.Sprintf(urlBase, r.addr, r.port)
-	resp, err := r.post(url, r.contType, bytes.NewBuffer(data))
+	resp, err := r.request(_post, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, wrapErr(err, "request")
 	}
@@ -182,13 +181,23 @@ func (r httpRepository) parseClientError(body io.ReadCloser) (*data, error) {
 }
 
 func (r httpRepository) fetch(id string) (*data, error) {
-	resp, err := r.get(fmt.Sprintf("http://%s:%s/v1/organisation/accounts/%s", r.addr, r.port, id))
+	resp, err := r.request(_get, fmt.Sprintf("http://%s:%s/v1/organisation/accounts/%s", r.addr, r.port, id), nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "%s#fetch() get", r.errCtx)
+		return nil, errors.Wrapf(err, "%s#fetch() request", r.errCtx)
 	}
 	defer resp.Body.Close()
 
 	return r.handleFetchResp(resp)
+}
+
+func (r httpRepository) delete(id string, version int64) error {
+	resp, err := r.request(_delete, fmt.Sprintf("http://%s:%s/v1/organisation/accounts/%s?version=%v", r.addr, r.port, id, version), nil)
+	if err != nil {
+		return errors.Wrapf(err, "%s#delete() request", r.errCtx)
+	}
+	defer resp.Body.Close()
+
+	return nil
 }
 
 func (r httpRepository) handleFetchResp(resp *http.Response) (*data, error) {
@@ -211,9 +220,9 @@ func (r httpRepository) handleFetchResp(resp *http.Response) (*data, error) {
 }
 
 func (r httpRepository) health() error {
-	resp, err := r.get(fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.port))
+	resp, err := r.request(_get, fmt.Sprintf("http://%s:%s/v1/health", r.addr, r.port), nil)
 	if err != nil {
-		return errors.Wrapf(err, "%s#health() get", r.errCtx)
+		return errors.Wrapf(err, "%s#health() request", r.errCtx)
 	}
 	defer resp.Body.Close()
 

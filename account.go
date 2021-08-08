@@ -30,8 +30,13 @@ type (
 	//
 	// See: https://api-docs.form3.tech/api.html#organisation-accounts
 	CreateRequest struct {
-		// id is only used for test purposes.
-		id string
+		// ID is the unique ID of the resource in UUID 4 format. It identifies the resource within the system.
+		//
+		// Must be a new unique UUID 4 that hasn't been used in the Form3 system before. The call will fail with a 409
+		// HTTP error code if a duplicate UUID is used. (REQUIRED)
+		//
+		// See: https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
+		ID string
 		// OrganisationID of the organisation by which this resource has been created.
 		//
 		// Must be your organisation ID
@@ -42,34 +47,34 @@ type (
 		// Confirmation of Payee. (OPTIONAL)
 		//
 		// CoP: Set to true if the account has opted out of account matching. Defaults to false.
-		MatchingOptOut          bool
+		MatchingOptOut bool
 		// Number is the unique account number. It will automatically be generated if not provided. If provided, the
 		// account number is not validated. (OPTIONAL)
-		Number                  string
+		Number string
 		// AlternativeNames refers to the primary account names, only used for UK Confirmation of Payee. (OPTIONAL)
 		//
 		// CoP: Up to 3 alternative account names, one in each line of the array.
-		AlternativeNames        []string
+		AlternativeNames []string
 		// BankID refers to local country bank identifier. Format depends on the country. Required for most
 		// countries. (OPTIONAL)
-		BankID                  string
+		BankID string
 		// BankIDCode identifies the type of bank ID being used. Required value depends on country attribute. (OPTIONAL)
 		//
 		// See: https://api-docs.form3.tech/api.html#accounts-create-data-table
-		BankIDCode              string
+		BankIDCode string
 		// BaseCurrency is the Currency of the account. (CONDITIONAL)
-		BaseCurrency            string
+		BaseCurrency string
 		// Bic refers to the SWIFT BIC in either 8 or 11 character format e.g. 'NWBKGB22' (OPTIONAL)
-		Bic                     string
+		Bic string
 		// Country refers to Country of the account. (OPTIONAL)
-		Country                 string
+		Country string
 		// Iban of the account. Will be calculated from other fields if not supplied. Ignored in SEPA Indirect,
 		// provided by LHV after account generation is successful. (REQUIRED)
-		Iban                    string
+		Iban string
 		// JointAccount is a flag to indicate if the account is a joint account, only used for Confirmation of Payee (CoP)
 		//
 		// CoP: Set to true is this is a joint account. Defaults to false if not provided. (OPTIONAL)
-		JointAccount            bool
+		JointAccount bool
 		// Name of the account holder, up to four lines possible.
 		//
 		// CoP: Primary account name. For concatenated personal names, joint account names and organisation names,
@@ -77,7 +82,7 @@ type (
 		// names, the second line for last names. Titles are ignored and should not be entered. (REQUIRED)
 		//
 		// SEPA Indirect: Can be a person or organisation. Only the first line is used, minimum 5 characters. (REQUIRED)
-		Name                    []string
+		Name []string
 		// SecondaryIdentification is the additional information to identify the account and account holder, only used
 		// for Confirmation of Payee (CoP).
 		//
@@ -88,8 +93,9 @@ type (
 		//
 		// CoP: Set to true if the account has been switched using the Current Account Switching Service (CASS),
 		// false otherwise. (OPTIONAL)
-		Switched                bool
+		Switched bool
 	}
+	// Entity provides an abstraction to account. All information are provided by get methods
 	Entity struct {
 		id                      uuid.UUID
 		version                 int64
@@ -110,6 +116,9 @@ type (
 		status                  Status
 		switched                bool
 	}
+	// Service provides the main API to interact with account-api.
+	//
+	// It should not be instantiate directly. Use NewService(repo repository) *Service instead.
 	Service struct {
 		inputMapper
 		outputMapper
@@ -135,6 +144,9 @@ type (
 	}
 )
 
+// NewService instantiates a Service. It is the only way to instantiate Service.
+//
+// It receives a repository as argument. The argument provides low level RPC to interact with account-api.
 func NewService(repo repository) *Service {
 	mapper := mapper{}
 	return &Service{
@@ -145,6 +157,10 @@ func NewService(repo repository) *Service {
 	}
 }
 
+// Create registers an existing bank account with account-api or create a new one. The Country attribute must be
+// specified as a minimum. Depending on the country, other attributes such as BankID and Bic are mandatory.
+//
+// Returns error when CreateRequest -> data, repo.create(), data -> Entity fails.
 func (s Service) Create(cr CreateRequest) (*Entity, error) {
 	wrapErr := func(err error, msg string) error {
 		return errors.Wrapf(err, "%s create_%s: organisationID: %s, country: %s", s.errCtx, msg, cr.OrganisationID, cr.Country)
@@ -264,14 +280,14 @@ func (r mapper) toAcc(cr CreateRequest) *data {
 		OrganisationID: cr.OrganisationID,
 		Type:           "accounts",
 		Version:        &defaultVersion,
-		ID:             cr.id,
+		ID:             cr.ID,
 	}
 }
 
 func (r mapper) ofAcc(d data) (*Entity, error) {
 	id, err := uuid.Parse(d.ID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "id parse: %s", d.ID)
+		return nil, errors.Wrapf(err, "ID parse: %s", d.ID)
 	}
 
 	organisationID, err := uuid.Parse(d.OrganisationID)

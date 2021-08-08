@@ -88,7 +88,7 @@ var (
 
 var (
 	_fullyFilledCreateRequest = CreateRequest{
-		id:                      _idStub,
+		ID:                      _idStub,
 		OrganisationID:          _organisationIDStub,
 		Number:                  _numberStub,
 		AlternativeNames:        _alternativeNamesStub,
@@ -149,7 +149,7 @@ var (
 		ID:             _idStub,
 	}
 	_basicFilledCreateRequest = CreateRequest{
-		id:             _fakeStubID,
+		ID:             _fakeStubID,
 		OrganisationID: _organisationIDStub,
 		Classification: _classificationStub,
 		Number:         _numberStub,
@@ -261,7 +261,7 @@ func TestOfAcc_Error(t *testing.T) {
 		in   data
 		want error
 	}{
-		{"id parser", _dataWithIDErr, errors.New("id parse: 3rr0r: invalid UUID length: 5")},
+		{"ID parser", _dataWithIDErr, errors.New("ID parse: 3rr0r: invalid UUID length: 5")},
 		{"organisationID parser", _dataWithOrganizationIDErr, errors.New("organisationID parse: 0RG4N1Z4T10N_3rr0r: invalid UUID length: 18")},
 		{"att nil", _dataWithAttErr, errors.New("att.Attributes is nil")},
 	}

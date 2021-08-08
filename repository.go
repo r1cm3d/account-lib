@@ -46,7 +46,7 @@ type (
 	}
 	data struct {
 		Attributes     *attributes `json:"attributes,omitempty"`
-		ID             string      `json:"id,omitempty"`
+		ID             string      `json:"ID,omitempty"`
 		OrganisationID string      `json:"organisation_id,omitempty"`
 		Type           string      `json:"type,omitempty"`
 		Version        *int64      `json:"version,omitempty"`

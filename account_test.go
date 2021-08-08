@@ -10,10 +10,10 @@ import (
 )
 
 type (
-	mockCreatorErr      struct{}
+	mockErr             struct{}
 	mockInputMapper     struct{}
 	mockOutputMapperErr struct{}
-	mockCreatorOk       struct {
+	mockOk              struct {
 		assertArg bool
 		expData   data
 	}
@@ -46,28 +46,31 @@ var (
 )
 
 var (
-	_serviceWithCreateError = Service{
+	_serviceWithRequestError = Service{
 		errCtx:      "service",
 		inputMapper: mockInputMapper{},
-		creator:     mockCreatorErr{},
+		creator:     mockErr{},
+		retriever:   mockErr{},
 	}
 	_serviceWithOutputMapperError = Service{
 		errCtx:       "service",
 		inputMapper:  mockInputMapper{},
-		creator:      mockCreatorOk{expData: _fullyFilledData},
+		creator:      mockOk{expData: _fullyFilledData},
+		retriever:    mockOk{expData: _fullyFilledData},
 		outputMapper: mockOutputMapperErr{},
 	}
 	_serviceWithMockedRepositoryFullyFilled = Service{
 		errCtx:       "service",
 		inputMapper:  mapper{},
 		outputMapper: mapper{},
-		creator:      mockCreatorOk{assertArg: true, expData: _fullyFilledData},
+		creator:      mockOk{assertArg: true, expData: _fullyFilledData},
+		retriever:    mockOk{assertArg: true, expData: _fullyFilledData},
 	}
 	_serviceWithMockedRepositoryBasicFilled = Service{
 		errCtx:       "service",
 		inputMapper:  mapper{},
 		outputMapper: mapper{},
-		creator:      mockCreatorOk{assertArg: true, expData: _basicFilledData},
+		creator:      mockOk{assertArg: true, expData: _basicFilledData},
 	}
 )
 
@@ -236,13 +239,20 @@ func TestAccountCreate(t *testing.T) {
 	}
 }
 
+func TestAccountFetch(t *testing.T) {
+	got, _ := _serviceWithMockedRepositoryFullyFilled.Fetch(_idStub)
+	if !reflect.DeepEqual(got, _fullyFilledEntity) {
+		t.Errorf("Fetch got: %v, want: %v", got, _fullyFilledEntity)
+	}
+}
+
 func TestCreate_Error(t *testing.T) {
 	cases := []struct {
 		name string
 		in   Service
 		want error
 	}{
-		{"repo", _serviceWithCreateError, errors.New("service create_repo_create: organisationID: , country: : repo create error")},
+		{"repo", _serviceWithRequestError, errors.New("service create_repo_create: organisationID: , country: : repo create error")},
 		{"ofAcc", _serviceWithOutputMapperError, errors.New("service create_ofAcc: organisationID: , country: : ofAcc error")},
 	}
 	cr := CreateRequest{}
@@ -251,6 +261,24 @@ func TestCreate_Error(t *testing.T) {
 		_, got := tt.in.Create(cr)
 		if got.Error() != tt.want.Error() {
 			t.Errorf("Create_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestFetch_Error(t *testing.T) {
+	cases := []struct {
+		name string
+		in   Service
+		want error
+	}{
+		{"repo", _serviceWithRequestError, errors.New("service fetch_repo_fetch: id: id: repo fetch error")},
+		{"ofAcc", _serviceWithOutputMapperError, errors.New("service fetch_ofAcc: id: id: ofAcc error")},
+	}
+
+	for _, tt := range cases {
+		_, got := tt.in.Fetch("id")
+		if got.Error() != tt.want.Error() {
+			t.Errorf("Fetch_Error(%v) got: %v, want: %v", tt.name, got, tt.want)
 		}
 	}
 }
@@ -322,12 +350,41 @@ func TestEntity(t *testing.T) {
 	assert("Switched", entity.Switched(), _switchedStub)
 }
 
-func (m mockCreatorErr) create(_ data) (*data, error) {
+func (m mockErr) create(_ data) (*data, error) {
 	return nil, errors.New("repo create error")
 }
 
-func (m mockCreatorOk) create(d data) (*data, error) {
-	expInput := &data{
+func (m mockErr) fetch(_ string) (*data, error) {
+	return nil, errors.New("repo fetch error")
+}
+
+func (m mockOk) create(d data) (*data, error) {
+	expInput := m.buildData()
+
+	if m.assertArg &&
+		(expInput.ID != d.ID ||
+			expInput.Type != d.Type ||
+			expInput.OrganisationID != d.OrganisationID ||
+			!reflect.DeepEqual(expInput.Version, d.Version) ||
+			!reflect.DeepEqual(expInput.Attributes, d.Attributes)) {
+		return nil, errors.New("mockOk expInput did not match with data")
+	}
+
+	return &m.expData, nil
+}
+
+func (m mockOk) fetch(id string) (*data, error) {
+	expInput := m.buildData()
+
+	if m.assertArg && (expInput.ID != id) {
+		return nil, errors.New("mockOk expInput did not match with data")
+	}
+
+	return &m.expData, nil
+}
+
+func (m mockOk) buildData() *data {
+	return &data{
 		Attributes: &attributes{
 			Classification:          m.expData.Attributes.Classification,
 			MatchingOptOut:          m.expData.Attributes.MatchingOptOut,
@@ -349,17 +406,6 @@ func (m mockCreatorOk) create(d data) (*data, error) {
 		Version:        m.expData.Version,
 		ID:             m.expData.ID,
 	}
-
-	if m.assertArg &&
-		(expInput.ID != d.ID ||
-			expInput.Type != d.Type ||
-			expInput.OrganisationID != d.OrganisationID ||
-			!reflect.DeepEqual(expInput.Version, d.Version) ||
-			!reflect.DeepEqual(expInput.Attributes, d.Attributes)) {
-		return nil, errors.New("mockCreatorOk expInput did not match with data")
-	}
-
-	return &m.expData, nil
 }
 
 func (m mockInputMapper) toAcc(_ CreateRequest) *data {

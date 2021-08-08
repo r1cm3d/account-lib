@@ -123,6 +123,7 @@ type (
 		inputMapper
 		outputMapper
 		creator
+		retriever
 
 		errCtx string
 	}
@@ -132,9 +133,13 @@ type (
 	mapper     struct{}
 	repository interface {
 		creator
+		retriever
 	}
 	creator interface {
 		create(data) (*data, error)
+	}
+	retriever interface {
+		fetch(string) (*data, error)
 	}
 	inputMapper interface {
 		toAcc(CreateRequest) *data
@@ -152,6 +157,7 @@ func NewService(repo repository) *Service {
 	return &Service{
 		errCtx:       "service",
 		creator:      repo,
+		retriever:    repo,
 		inputMapper:  mapper,
 		outputMapper: mapper,
 	}
@@ -170,6 +176,27 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 	ret, err := s.create(*data)
 	if err != nil {
 		return nil, wrapErr(err, "repo_create")
+	}
+
+	acc, err := s.ofAcc(*ret)
+	if err != nil {
+		return nil, wrapErr(err, "ofAcc")
+	}
+
+	return acc, nil
+}
+
+// Fetch gets a single account using the account ID.
+//
+// See: https://api-docs.form3.tech/api.html#organisation-accounts-fetch
+func (s Service) Fetch(id string) (*Entity, error) {
+	wrapErr := func(err error, msg string) error {
+		return errors.Wrapf(err, "%s fetch_%s: id: %s", s.errCtx, msg, id)
+	}
+
+	ret, err := s.fetch(id)
+	if err != nil {
+		return nil, wrapErr(err, "repo_fetch")
 	}
 
 	acc, err := s.ofAcc(*ret)

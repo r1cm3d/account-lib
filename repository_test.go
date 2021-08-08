@@ -157,7 +157,7 @@ func TestFetchIntegration(t *testing.T) {
 		assertInterface("Version", got.Version, _accountStub.Version)
 		assertData("ID", got.ID, _accountStub.ID)
 		assertData("OrganisationID", got.OrganisationID, _accountStub.OrganisationID)
-		assertData("OrganisationID", got.Type, _accountStub.Type)
+		assertData("Type", got.Type, _accountStub.Type)
 
 		return
 	}

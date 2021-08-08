@@ -6,8 +6,14 @@ import (
 )
 
 type (
-	method     string
+	method       string
+	buildRequest func(method, url string, body io.Reader) (*http.Request, error)
+	requester    interface {
+		Do(req *http.Request) (*http.Response, error)
+	}
 	httpclient struct {
+		buildRequest
+		requester
 	}
 )
 
@@ -17,16 +23,21 @@ const (
 	_get    = "GET"
 )
 
-func (h httpclient) request(method method, url string, body io.Reader) (*http.Response, error) {
-	client := &http.Client{}
+func newHttpClient() httpclient {
+	return httpclient{
+		buildRequest: http.NewRequest,
+		requester:    &http.Client{},
+	}
+}
 
-	req, err := http.NewRequest(string(method), url, body)
+func (h httpclient) request(method method, url string, body io.Reader) (*http.Response, error) {
+	req, err := h.buildRequest(string(method), url, body)
 	if err != nil {
 		// TODO: wrap it
 		return nil, err
 	}
 
-	resp, err := client.Do(req)
+	resp, err := h.Do(req)
 	if err != nil {
 		// TODO: wrap it
 		return nil, err

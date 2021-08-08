@@ -217,6 +217,20 @@ func TestAccountCreateIntegration(t *testing.T) {
 	fmt.Printf("Created data: %v", got.ID())
 }
 
+func TestAccountFetchIntegration(t *testing.T) {
+	skipShort(t)
+	addStub(t)
+
+	svc := NewService(NewHTTPRepository(WithAddr(*_itAddress)))
+
+	got, err := svc.Fetch(_idStub)
+	if err != nil {
+		t.Fatal()
+	}
+
+	fmt.Printf("Fetched data: %v", got.ID())
+}
+
 func TestAccountCreate(t *testing.T) {
 	type in struct {
 		cr  CreateRequest

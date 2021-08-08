@@ -1,6 +1,7 @@
 package account
 
 import (
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 )
@@ -14,6 +15,8 @@ type (
 	httpclient struct {
 		buildRequest
 		requester
+
+		errCtx string
 	}
 )
 
@@ -23,24 +26,23 @@ const (
 	_get    = "GET"
 )
 
-func newHttpClient() httpclient {
+func newHTTPClient() httpclient {
 	return httpclient{
 		buildRequest: http.NewRequest,
 		requester:    &http.Client{},
+		errCtx:       "http_client",
 	}
 }
 
 func (h httpclient) request(method method, url string, body io.Reader) (*http.Response, error) {
 	req, err := h.buildRequest(string(method), url, body)
 	if err != nil {
-		// TODO: wrap it
-		return nil, err
+		return nil, errors.Wrapf(err, "%s#request() buildRequest", h.errCtx)
 	}
 
 	resp, err := h.Do(req)
 	if err != nil {
-		// TODO: wrap it
-		return nil, err
+		return nil, errors.Wrapf(err, "%s#request() do", h.errCtx)
 	}
 
 	return resp, nil

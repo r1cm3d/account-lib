@@ -98,7 +98,7 @@ func NewHTTPRepository(opts ...httpOption) httpRepository {
 		errCtx:   "http_repository",
 		contType: "application/json",
 		marshal:  json.Marshal,
-		client:   newHttpClient(),
+		client:   newHTTPClient(),
 		decode:   func(d *json.Decoder, v interface{}) error { return d.Decode(v) },
 	}
 }

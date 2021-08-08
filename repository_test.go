@@ -200,25 +200,30 @@ func TestFetchIntegration(t *testing.T) {
 	t.Fail()
 }
 
+func TestFetch_NotFoundIntegration(t *testing.T) {
+	skipShort(t)
+	addStub(t)
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
+	nfID := "eed9954a-a58b-4f59-b44f-8d0592748d53"
+
+	got, err := repo.fetch(nfID)
+
+	if got != nil || err != nil {
+		t.Fail()
+	}
+}
+
 func TestRepositoryFetch_ErrorIntegration(t *testing.T) {
 	skipShort(t)
-	cases := []struct {
-		name string
-		in   string
-	}{
-		{"invalid id", "666"},
-		{"not found id", "8b78d27b-4621-4e5a-bfdd-94e0cf784a00"},
-	}
 	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
+	invalidID := "666"
 
-	for _, tt := range cases {
-		_, err := repo.fetch(tt.in)
-		if err == nil {
-			t.Errorf("RepositoryFetch_ErrorIntegration(%v) in: %v, want: NOT ERROR", tt.name, tt.in)
-		}
-
-		fmt.Printf("Message error: %v", err.Error())
+	_, err := repo.fetch(invalidID)
+	if err == nil {
+		t.Errorf("RepositoryFetch_ErrorIntegration in: %v, want: NOT ERROR", invalidID)
 	}
+
+	fmt.Printf("Message error: %v", err.Error())
 }
 
 func TestHealth_Error(t *testing.T) {
@@ -263,7 +268,6 @@ func TestRepositoryFetch_Error(t *testing.T) {
 		{"unsuccessfully status code", _repositoryWithUnsuccessfullyStatusCode, errors.New("http_repository#handleFetchResp() status_code_verification: != (200|40[04])")},
 		{"decode success error", _repositoryWithDecodeSuccessError, errors.New("http_repository#parseSuccess() decode: error on decode success")},
 		{"decode badRequest error", _repositoryWithDecodeBadRequestError, errors.New("http_repository#parseClientError() decode: error on decode badRequest")},
-		{"decode notFound error", _repositoryWithDecodeNotFoundError, errors.New("http_repository#parseClientError() decode: error on decode notFound")},
 	}
 	for _, tt := range cases {
 		_, got := tt.in.fetch(_fakeStubID)

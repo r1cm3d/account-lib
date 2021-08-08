@@ -201,8 +201,10 @@ func (r httpRepository) handleFetchResp(resp *http.Response) (*data, error) {
 	switch resp.StatusCode {
 	case success:
 		return r.parseSuccess(resp.Body)
-	case clientError,notFound:
+	case clientError:
 		return r.parseClientError(resp.Body)
+	case notFound:
+		return nil, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("%s#handleFetchResp() status_code_verification: != (200|40[04])", r.errCtx))
 	}

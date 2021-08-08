@@ -180,30 +180,37 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 	return acc, nil
 }
 
+// ID returns the ID as uuid.UUID of the Entity account.
 func (a Entity) ID() uuid.UUID {
 	return a.id
 }
 
+// Version returns the Version of the Entity account.
 func (a Entity) Version() int64 {
 	return a.version
 }
 
+// OrganisationID returns the OrganisationID as uuid.UUID of the Entity account.
 func (a Entity) OrganisationID() uuid.UUID {
 	return a.organisationID
 }
 
+// Classification returns the Classification of the Entity account.
 func (a Entity) Classification() Classification {
 	return a.classification
 }
 
+// MatchingOptOut returns the MatchingOptOut of the Entity account.
 func (a Entity) MatchingOptOut() bool {
 	return a.matchingOptOut
 }
 
+// Number returns the Number of the Entity account.
 func (a Entity) Number() string {
 	return a.number
 }
 
+// AlternativeNames returns the defensive copy of AlternativeNames of the Entity account.
 func (a Entity) AlternativeNames() []string {
 	newAltNam := make([]string, len(a.alternativeNames))
 	copy(newAltNam, a.alternativeNames)
@@ -211,34 +218,42 @@ func (a Entity) AlternativeNames() []string {
 	return newAltNam
 }
 
+// BankID returns the BankID of the Entity account.
 func (a Entity) BankID() string {
 	return a.bankID
 }
 
+// BankIDCode returns the BankIDCode of the Entity account.
 func (a Entity) BankIDCode() string {
 	return a.bankIDCode
 }
 
+// BaseCurrency returns the BaseCurrency of the Entity account.
 func (a Entity) BaseCurrency() Currency {
 	return a.baseCurrency
 }
 
+// Bic returns the Bic of the Entity account.
 func (a Entity) Bic() string {
 	return a.bic
 }
 
+// Country returns the Country of the Entity account.
 func (a Entity) Country() Country {
 	return a.country
 }
 
+// Iban returns the Iban of the Entity account.
 func (a Entity) Iban() string {
 	return a.iban
 }
 
+// JointAccount returns the JointAccount of the Entity account.
 func (a Entity) JointAccount() bool {
 	return a.jointAccount
 }
 
+// Name returns the defensive copy of Name of the Entity account.
 func (a Entity) Name() []string {
 	newName := make([]string, len(a.name))
 	copy(newName, a.name)
@@ -246,14 +261,17 @@ func (a Entity) Name() []string {
 	return newName
 }
 
+// SecondaryIdentification returns the SecondaryIdentification of the Entity account.
 func (a Entity) SecondaryIdentification() string {
 	return a.secondaryIdentification
 }
 
+// Status returns the Status of the Entity account.
 func (a Entity) Status() Status {
 	return a.status
 }
 
+// Switched returns the Switched of the Entity account.
 func (a Entity) Switched() bool {
 	return a.switched
 }

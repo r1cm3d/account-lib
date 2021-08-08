@@ -210,12 +210,12 @@ func TestRepositoryFetch_ErrorIntegration(t *testing.T) {
 }
 
 func TestHealth_Error(t *testing.T) {
-	const msgError = "http_repository#health() request: error on request"
+	error := "http_repository#health() request: error on request"
 
 	got := _repositoryWithRequestError.health()
 
-	if got.Error() != msgError {
-		t.Errorf("RepositoryHealth_Error got: %v, want: %v", got, msgError)
+	if got.Error() != error {
+		t.Errorf("RepositoryHealth_Error got: %v, want: %v", got, error)
 	}
 }
 

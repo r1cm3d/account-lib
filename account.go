@@ -95,6 +95,14 @@ type (
 		// false otherwise. (OPTIONAL)
 		Switched bool
 	}
+	// DeleteRequest is an interface that provides the contract to delete an account.
+	//
+	// Is not necessary implement this interface to delete an account, one could use BuildDeleteRequest function instead
+	// or pass an Entity as argument, since it implements DeleteRequest.
+	DeleteRequest interface {
+		ID() string
+		Version() int64
+	}
 	// Entity provides an abstraction to account. All information are provided by get methods
 	Entity struct {
 		id                      uuid.UUID
@@ -124,8 +132,12 @@ type (
 		outputMapper
 		creator
 		retriever
+		eraser
 
 		errCtx string
+	}
+	basicDeleteRequest struct {
+		id string
 	}
 )
 
@@ -134,12 +146,16 @@ type (
 	repository interface {
 		creator
 		retriever
+		eraser
 	}
 	creator interface {
 		create(data) (*data, error)
 	}
 	retriever interface {
-		fetch(string) (*data, error)
+		fetch(id string) (*data, error)
+	}
+	eraser interface {
+		delete(id string, version int64) error
 	}
 	inputMapper interface {
 		toAcc(CreateRequest) *data
@@ -158,6 +174,7 @@ func NewService(repo repository) *Service {
 		errCtx:       "service",
 		creator:      repo,
 		retriever:    repo,
+		eraser:       repo,
 		inputMapper:  mapper,
 		outputMapper: mapper,
 	}
@@ -189,7 +206,6 @@ func (s Service) Create(cr CreateRequest) (*Entity, error) {
 // Fetch gets a single account using the account ID.
 //
 // See: https://api-docs.form3.tech/api.html#organisation-accounts-fetch
-// TODO: change argument to FetchRequest interface implemented by Entity
 func (s Service) Fetch(id string) (*Entity, error) {
 	wrapErr := func(err error, msg string) error {
 		return errors.Wrapf(err, "%s fetch_%s: id: %s", s.errCtx, msg, id)
@@ -208,9 +224,28 @@ func (s Service) Fetch(id string) (*Entity, error) {
 	return acc, nil
 }
 
-// ID returns the ID as uuid.UUID of the Entity account.
-func (a Entity) ID() uuid.UUID {
+// Delete an account.
+//
+// It accepts a DeleteRequest as argument. It uses an interface because it is possible to pass an Entity as argument
+// since it implements DeleteRequest interface. Otherwise one should use BuildDeleteRequest function.
+//
+// See: https://api-docs.form3.tech/api.html#organisation-accounts-delete
+func (s Service) Delete(dr DeleteRequest) error {
+	if err := s.delete(dr.ID(), dr.Version()); err != nil {
+		return errors.Wrapf(err, "%s delete: id: %s", s.errCtx, dr.ID())
+	}
+
+	return nil
+}
+
+// UUID returns the ID as uuid.UUID of the Entity account.
+func (a Entity) UUID() uuid.UUID {
 	return a.id
+}
+
+// ID returns the ID as string of the Entity account.
+func (a Entity) ID() string {
+	return a.id.String()
 }
 
 // Version returns the Version of the Entity account.
@@ -302,6 +337,21 @@ func (a Entity) Status() Status {
 // Switched returns the Switched of the Entity account.
 func (a Entity) Switched() bool {
 	return a.switched
+}
+
+// BuildDeleteRequest is a utility function used to delete an account without implement DeleteRequest.
+func BuildDeleteRequest(id string) DeleteRequest {
+	return &basicDeleteRequest{
+		id: id,
+	}
+}
+
+func (b basicDeleteRequest) ID() string {
+	return b.id
+}
+
+func (b basicDeleteRequest) Version() int64 {
+	return int64(0)
 }
 
 func (r mapper) toAcc(cr CreateRequest) *data {

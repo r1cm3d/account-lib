@@ -51,6 +51,7 @@ var (
 		inputMapper: mockInputMapper{},
 		creator:     mockErr{},
 		retriever:   mockErr{},
+		eraser:      mockErr{},
 	}
 	_serviceWithOutputMapperError = Service{
 		errCtx:       "service",
@@ -231,6 +232,20 @@ func TestAccountFetchIntegration(t *testing.T) {
 	fmt.Printf("Fetched data: %v", got.ID())
 }
 
+func TestAccountDeleteIntegration(t *testing.T) {
+	skipShort(t)
+	addStub(t)
+
+	svc := NewService(NewHTTPRepository(WithAddr(*_itAddress)))
+
+	err := svc.Delete(BuildDeleteRequest(_fakeStubID))
+	if err != nil {
+		t.Fatal()
+	}
+
+	fmt.Print("Deleted data")
+}
+
 func TestAccountCreate(t *testing.T) {
 	type in struct {
 		cr  CreateRequest
@@ -297,6 +312,13 @@ func TestFetch_Error(t *testing.T) {
 	}
 }
 
+func TestDelete_Error(t *testing.T) {
+	msg := "service delete: id: ad27e265-9605-4b4b-a0e5-3003ea9cc4d2: repo delete error"
+	if got := _serviceWithRequestError.Delete(BuildDeleteRequest(_fakeStubID)); got.Error() != msg {
+		t.Errorf("Delete_Error got: %v, want: %v", got, msg)
+	}
+}
+
 func TestOfAcc_Error(t *testing.T) {
 	cases := []struct {
 		name string
@@ -344,7 +366,8 @@ func TestEntity(t *testing.T) {
 		switched:                _switchedStub,
 	}
 
-	assert("ID", entity.ID(), _uuidStub)
+	assert("ID", entity.ID(), _idStub)
+	assert("UUID", entity.UUID(), _uuidStub)
 	assert("Version", entity.Version(), _versionStub)
 	assert("OrganisationID", entity.OrganisationID(), _organisationUUIDStub)
 	assert("Classification", entity.Classification(), Classification(_classificationStub))
@@ -370,6 +393,10 @@ func (m mockErr) create(_ data) (*data, error) {
 
 func (m mockErr) fetch(_ string) (*data, error) {
 	return nil, errors.New("repo fetch error")
+}
+
+func (m mockErr) delete(_ string, _ int64) error {
+	return errors.New("repo delete error")
 }
 
 func (m mockOk) create(d data) (*data, error) {

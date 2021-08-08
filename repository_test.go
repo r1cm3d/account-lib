@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
@@ -89,6 +90,7 @@ var (
 		ID:             _fakeStubID,
 		OrganisationID: "eb0bd6f5-c3f5-44b2-b677-acd23cdde73c",
 		Type:           "accounts",
+		Version: &_versionStub,
 	}
 	_accountFailedStub = data{
 		Type: "accounts",
@@ -130,6 +132,37 @@ func TestHealthIntegration(t *testing.T) {
 	if err := repo.health(); err != nil {
 		t.Fail()
 	}
+}
+
+func TestFetchIntegration(t *testing.T) {
+	errT := func(propName string, got, want interface{}) {
+		t.Errorf("TestFetchIntegration_%s got: %v, want: %v", propName, got, want)
+	}
+	assertInterface := func(propName string, got, want interface{}) {
+		if !reflect.DeepEqual(got, want) {
+			errT(propName, got, want)
+		}
+	}
+	assertData := func(propName string, got, want interface{}) {
+		if !reflect.DeepEqual(got, want) {
+			errT(propName, got, want)
+		}
+	}
+	skipShort(t)
+	addStub(t)
+	repo := NewHTTPRepository(WithAddr(*_itAddress), WithPort(_itPort))
+
+	if got, _ := repo.fetch(_fakeStubID); got != nil {
+		assertInterface("Attribute", got.Attributes, _accountStub.Attributes)
+		assertInterface("Version", got.Version, _accountStub.Version)
+		assertData("ID", got.ID, _accountStub.ID)
+		assertData("OrganisationID", got.OrganisationID, _accountStub.OrganisationID)
+		assertData("OrganisationID", got.Type, _accountStub.Type)
+
+		return
+	}
+
+	t.Fail()
 }
 
 func TestHealth_Error(t *testing.T) {

@@ -179,7 +179,16 @@ func (r httpRepository) parseClientError(body io.ReadCloser) (*data, error) {
 	}
 
 	return nil, errors.New(cr.Message)
+}
 
+func (r httpRepository) fetch(id string) (*data, error) {
+	resp, err := r.get(fmt.Sprintf("http://%s:%s/v1/organisation/accounts/%s", r.addr, r.port, id))
+	if err != nil {
+		return nil, errors.Wrapf(err, "%s#fetch() get", r.errCtx)
+	}
+	defer resp.Body.Close()
+
+	return r.parseSuccess(resp.Body)
 }
 
 func (r httpRepository) health() error {

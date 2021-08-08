@@ -77,20 +77,27 @@ const (
 
 // WithAddr attaches server address to HTTP client.
 // Default is 0.0.0.0
+//
+// See: https://github.com/uber-go/guide/blob/master/style.md#functional-options
 func WithAddr(addr string) httpOption {
 	return addrOption(addr)
 }
 
 // WithPort attaches server TCP port to HTTP client.
 // Default is 8080
+//
+// See: https://github.com/uber-go/guide/blob/master/style.md#functional-options
 func WithPort(port string) httpOption {
 	return portOption(port)
 }
 
-// NewHTTPRepository instantiate a httpRepository based on httpOption(s) passed as arguments.
+// NewHTTPRepository instantiates a httpRepository based on httpOption(s) passed as arguments. If no argument is passed
+// the defaults will be used.
 //
 // Example:
 //  repository := NewHTTPRepository(acc.WithPort("8080"))
+//  repository := NewHTTPRepository(acc.WithPort("8080"), acc.WithAddr("0.0.0.0"))
+//  repository := NewHTTPRepository()
 func NewHTTPRepository(opts ...httpOption) httpRepository {
 	options := httpOptions{
 		addr: _defaultHTTPAddress,

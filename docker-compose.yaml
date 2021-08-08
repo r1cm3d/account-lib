@@ -44,7 +44,7 @@ services:
   it-test:
     image: golang:1.16
     stop_signal: SIGKILL
-    command: "make it-test"
+    command: "make test-container"
     working_dir: /go/src/github.com/r1cm3d/account-lib
     volumes:
       - ./:/go/src/github.com/r1cm3d/account-lib

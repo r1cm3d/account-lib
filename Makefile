@@ -26,20 +26,12 @@ unit-test:
 	@echo "\nRunning unit tests\n"
 	@go test -cover -short ./...
 
-it-test-locally: unit-test
+it-test: unit-test
 	@echo "\nRunning integration tests locally\n"
 	@go test -cover -run Integration ./...
 
-it-test: unit-test
-	@echo "\nRunning integration tests in container environment\n"
-	@go test -cover -run Integration ./... -args -itaddr=accountapi
-
 test: fmt unit-test install it-test
 	@echo "\nRunning tests\n"
-
-docker-test:
-	@echo "\nRunning all test in a containerized environment\n"
-	@docker-compose run --rm it-test
 
 install:
 	@echo "\nStarting fake account API\n"
@@ -52,3 +44,11 @@ uninstall:
 clean: uninstall
 	@echo "\nCleaning all images"
 	@cd scripts  && sh clean.sh
+
+compose-test:
+	@echo "\nRunning all test in a containerized environment\n"
+	@docker-compose run --rm it-test
+
+test-container: unit-test
+	@echo "\nRunning integration tests in container environment\n"
+	@go test -cover -run Integration ./... -args -itaddr=accountapi

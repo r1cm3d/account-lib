@@ -71,8 +71,8 @@ make doc
 ```
 Open your browser, it will be running in localhost address at `6060` TCP port.
 ### Clean
-To remove all docker containers download and installed by this project, run:
+To remove all docker containers downloaded and installed by this project, run:
 ```shell
 make clean
 ```
-This script will run [clean.sh](scripts/clean.sh) which is a basis shell script with a couple of docker commands.
+This script will run [clean.sh](scripts/clean.sh) which is a basic shell script with a couple of docker commands.

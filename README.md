@@ -4,10 +4,10 @@
 [![license](https://img.shields.io/badge/license-BSD--2-red)](./LICENSE)
 
 **TL;DR:**
-```console
-make
+```shell
+make compose-test
 ```
-[comment]: <> (TODO: add description and gif here)
+![](img/compose-test.gif)
 
 ## Prerequisites
 [![Docker](https://img.shields.io/badge/Docker-19.03.9-blue)](https://www.docker.com/)
@@ -20,6 +20,9 @@ make
 * [Prerequisites](#prerequisites)
 * [About the Project](#about-the-project)
 * [Testing](#testing)
+* [Setup local environment](#setup-local-envinroment)
+* [Documentation](#documentation)
+* [Clean](#clean)
 
 ## About The Project
 
@@ -30,20 +33,46 @@ patterns found in [Uber Style Guide](https://github.com/uber-go/guide/blob/maste
 useful insights about of writing Go code in general.
 
 ### Testing
+This project has one hundred percentage of code coverage. It could be checked with the following commands:
 #### Unit tests
-[comment]: <> (TODO: add description and gif here)
-```sh
+```shell
 make unit-test
 ```
-
+It will run unit tests in the local environment. It is necessary to have Go installed.
 #### Integration tests
-[comment]: <> (TODO: add description and gif here)
-```sh
-make integration-test
+```shell
+make it-test
 ```
+It will run integration tests in the local environment. It is necessary to have Go installed and run dependencies. See
+[make](#setup-local-environment) and [make install](#setup-local-environment).
+
 
 #### All tests
-[comment]: <> (TODO: add description here)
-```sh
+```shell
 make test
 ```
+This is going to apply fmt and run both unit and integration tests.
+
+### Setup Local Environment
+Build application and run tests in a containerized environment is the easy way to run it isolated from environment noise.
+Although this is quite useful, but sometimes is necessary debug the application or even debug an integration test. In this case, run the follow
+command pipeline:
+```shell
+./configure && make && make install
+```
+![](img/make-install.gif)
+Configure script will certificate that your environment is able to assemble the application locally. `make` target will
+assemble the application with `go build` running `go vet`, `go fmt` and `go lint` before it. For the last, `make install`
+will run [docker-compose](docker-compose.yaml) with all dependencies.
+### Documentation
+This library has the basic documentation for use it, to see it in your browser:
+```shell
+make doc
+```
+Open your browser, it will be running in localhost address at `6060` TCP port.
+### Clean
+To remove all docker containers download and installed by this project, run:
+```shell
+make clean
+```
+This script will run [clean.sh](scripts/clean.sh) which is a basis shell script with a couple of docker commands.

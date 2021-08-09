@@ -1,4 +1,4 @@
-# account-lib
+# account-lib by Ricardo Medeiros da Costa Junior
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/ricardomedeirosdacostajunior/aws-poc)
 [![license](https://img.shields.io/badge/license-BSD--2-red)](./LICENSE)

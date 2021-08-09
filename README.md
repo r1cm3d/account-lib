@@ -61,7 +61,7 @@ command pipeline:
 ./configure && make && make install
 ```
 ![](img/make-install.gif)
-Configure script will certificate that your environment is able to assemble the application locally. `make` target will
+[configure](scripts/configure.sh) script will certificate that your environment is able to assemble the application locally. `make` target will
 assemble the application with `go build` running `go vet`, `go fmt` and `go lint` before it. For the last, `make install`
 will run [docker-compose](docker-compose.yaml) with all dependencies.
 ### Documentation

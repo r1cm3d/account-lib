@@ -55,13 +55,13 @@ This is going to apply fmt and run both unit and integration tests.
 
 ### Setup Local Environment
 Build application and run tests in a containerized environment is the easy way to run it isolated from environment noise.
-Although this is quite useful, but sometimes is necessary debug the application or even debug an integration test. In this case, run the follow
+Although this is quite useful, sometimes is necessary debug the application or even debug an integration test. In this case, run the follow
 command pipeline:
 ```shell
 ./configure && make && make install
 ```
 ![](img/make-install.gif)
-Configure script will certificate that your environment is able to assemble the application locally. `make` target will
+[configure](scripts/configure.sh) script will certificate that your environment is able to assemble the application locally. `make` target will
 assemble the application with `go build` running `go vet`, `go fmt` and `go lint` before it. For the last, `make install`
 will run [docker-compose](docker-compose.yaml) with all dependencies.
 ### Documentation
@@ -71,8 +71,8 @@ make doc
 ```
 Open your browser, it will be running in localhost address at `6060` TCP port.
 ### Clean
-To remove all docker containers download and installed by this project, run:
+To remove all docker containers downloaded and installed by this project, run:
 ```shell
 make clean
 ```
-This script will run [clean.sh](scripts/clean.sh) which is a basis shell script with a couple of docker commands.
+This script will run [clean.sh](scripts/clean.sh) which is a basic shell script with a couple of docker commands.

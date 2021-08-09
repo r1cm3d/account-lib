@@ -55,7 +55,7 @@ This is going to apply fmt and run both unit and integration tests.
 
 ### Setup Local Environment
 Build application and run tests in a containerized environment is the easy way to run it isolated from environment noise.
-Although this is quite useful, but sometimes is necessary debug the application or even debug an integration test. In this case, run the follow
+Although this is quite useful, sometimes is necessary debug the application or even debug an integration test. In this case, run the follow
 command pipeline:
 ```shell
 ./configure && make && make install
